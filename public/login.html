@@ -116,6 +116,142 @@
         .form-container.active {
             display: block;
         }
+        /* ========== Mobile Responsive ========== */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .container {
+        max-width: 100% !important;
+    }
+    
+    .header {
+        padding: 15px !important;
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .header h1 {
+        font-size: 20px !important;
+    }
+    
+    .user-info {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+    
+    .logout-btn, .admin-badge {
+        width: 100%;
+        font-size: 14px !important;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+    }
+    
+    .stat-card {
+        padding: 20px !important;
+    }
+    
+    .stat-card .number {
+        font-size: 28px !important;
+    }
+    
+    .prayer-card, .table-card {
+        padding: 20px !important;
+    }
+    
+    .prayer-card h2, .table-card h2 {
+        font-size: 18px !important;
+    }
+    
+    .checkbox-item {
+        padding: 15px !important;
+    }
+    
+    .checkbox-item label {
+        font-size: 16px !important;
+    }
+    
+    .save-btn {
+        padding: 12px !important;
+        font-size: 16px !important;
+    }
+    
+    /* Login page */
+    .logo h1 {
+        font-size: 24px !important;
+    }
+    
+    .logo p {
+        font-size: 12px !important;
+    }
+    
+    .tab {
+        padding: 12px 10px !important;
+        font-size: 14px !important;
+    }
+    
+    input {
+        font-size: 14px !important;
+        padding: 10px !important;
+    }
+    
+    .btn {
+        font-size: 16px !important;
+        padding: 12px !important;
+    }
+    
+    /* Admin table */
+    table {
+        font-size: 12px !important;
+    }
+    
+    th, td {
+        padding: 10px 8px !important;
+    }
+    
+    .rank-badge {
+        font-size: 12px !important;
+        padding: 3px 8px !important;
+        min-width: 30px !important;
+    }
+    
+    .points-badge {
+        font-size: 12px !important;
+        padding: 3px 10px !important;
+    }
+    
+    /* Hide some columns on very small screens */
+    @media (max-width: 480px) {
+        table th:nth-child(6),
+        table td:nth-child(6) {
+            display: none;
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .header h1 {
+        font-size: 18px !important;
+    }
+    
+    .stat-card .number {
+        font-size: 24px !important;
+    }
+    
+    .checkbox-item label {
+        font-size: 14px !important;
+    }
+    
+    .prayer-card h2 {
+        font-size: 16px !important;
+    }
+}
     </style>
 </head>
 <body>
