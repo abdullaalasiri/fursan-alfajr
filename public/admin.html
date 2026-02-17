@@ -389,7 +389,7 @@
                 }
                 const students = await response.json();
                 document.getElementById('totalStudents').textContent = students.length;
-                const totalPoints = students.reduce((sum, s) => sum + s.total_points, 0);
+                const totalPoints = students.reduce((sum, s) => sum + parseInt(s.total_points || 0), 0);
                 document.getElementById('totalPoints').textContent = totalPoints;
                 const avgPoints = students.length > 0 ? Math.round(totalPoints / students.length) : 0;
                 document.getElementById('avgPoints').textContent = avgPoints;
