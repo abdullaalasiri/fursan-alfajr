@@ -305,6 +305,42 @@
             color: #f44336;
             font-size: 12px;
         }
+        .delete-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .delete-btn:hover {
+            background: #d32f2f;
+        }
+        .search-box {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .search-input::placeholder {
+            color: #999;
+        }
         @media (max-width: 480px) {
             .modal { padding: 15px; }
             .modal-header h2 { font-size: 16px; }
@@ -379,6 +415,13 @@
                 <div class="number" id="avgPoints">0</div>
             </div>
         </div>
+        <div class="search-box">
+            <input type="text" 
+                   id="searchInput" 
+                   class="search-input" 
+                   placeholder="🔍 ابحث عن طالب... (اكتب الاسم أو اسم المستخدم)"
+                   onkeyup="filterStudents()">
+        </div>
         <div class="table-card">
             <h2>📊 جدول الطلاب</h2>
             <table>
@@ -391,11 +434,12 @@
                         <th>إجمالي النقاط</th>
                         <th>عدد الأيام</th>
                         <th>تاريخ التسجيل</th>
+                        <th>إجراء</th>
                     </tr>
                 </thead>
                 <tbody id="studentsTable">
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 30px;">
+                        <td colspan="8" style="text-align: center; padding: 30px;">
                             جاري تحميل البيانات...
                         </td>
                     </tr>
@@ -435,6 +479,9 @@
             return `${hijriMonthName(hijri.month)} ${hijri.day}`;
         }
 
+        // Store all students for filtering
+        let allStudents = [];
+
         async function loadStudents() {
             try {
                 const response = await fetch('/api/admin/students');
@@ -443,22 +490,32 @@
                     return;
                 }
                 const students = await response.json();
+                allStudents = students; // Store for filtering
+                
                 document.getElementById('totalStudents').textContent = students.length;
                 const totalPoints = students.reduce((sum, s) => sum + parseInt(s.total_points || 0), 0);
                 document.getElementById('totalPoints').textContent = totalPoints;
                 const avgPoints = students.length > 0 ? Math.round(totalPoints / students.length) : 0;
                 document.getElementById('avgPoints').textContent = avgPoints;
-                const tbody = document.getElementById('studentsTable');
-                if (students.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="6" style="text-align: center; padding: 30px; color: #999;">
-                                لا يوجد طلاب مسجلين بعد
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
+                
+                renderStudents(students);
+            } catch (error) {
+                console.error('Error loading students:', error);
+            }
+        }
+
+        function renderStudents(students) {
+            const tbody = document.getElementById('studentsTable');
+            if (students.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 30px; color: #999;">
+                            لا يوجد طلاب مطابقين للبحث
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
                 tbody.innerHTML = students.map(student => {
                     const rankClass = student.rank === 1 ? 'rank-1' : 
                                      student.rank === 2 ? 'rank-2' : 
@@ -472,14 +529,15 @@
                                       points === 2 ? '2 نقطتان' :
                                       `${points} نقاط`;
                     return `
-                        <tr onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">
-                            <td><span class="rank-badge ${rankClass}">#${student.rank}</span></td>
-                            <td><strong>${student.full_name}</strong></td>
-                            <td>${categoryBadge}</td>
-                            <td>${student.username}</td>
-                            <td><span class="points-badge">${pointsText}</span></td>
-                            <td>${student.days_count} يوم</td>
-                            <td>${formattedDate}</td>
+                        <tr>
+                            <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;"><span class="rank-badge ${rankClass}">#${student.rank}</span></td>
+                            <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;"><strong>${student.full_name}</strong></td>
+                            <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${categoryBadge}</td>
+                            <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${student.username}</td>
+                            <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;"><span class="points-badge">${pointsText}</span></td>
+                            <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${student.days_count} يوم</td>
+                            <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${formattedDate}</td>
+                            <td><button class="delete-btn" onclick="deleteUser(${student.id}, '${student.full_name}')">🗑️ حذف</button></td>
                         </tr>
                     `;
                 }).join('');
@@ -607,6 +665,50 @@
 
         function closeModalBtn() {
             document.getElementById('modalOverlay').classList.remove('open');
+        }
+
+        function filterStudents() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            
+            if (searchTerm === '') {
+                renderStudents(allStudents);
+                return;
+            }
+            
+            const filtered = allStudents.filter(student => {
+                const fullName = student.full_name.toLowerCase();
+                const username = student.username.toLowerCase();
+                const category = (student.category || '').toLowerCase();
+                
+                return fullName.includes(searchTerm) || 
+                       username.includes(searchTerm) ||
+                       category.includes(searchTerm);
+            });
+            
+            renderStudents(filtered);
+        }
+
+        async function deleteUser(id, name) {
+            if (!confirm(`⚠️ هل تريد حذف الطالب "${name}"؟\n\nسيتم حذف:\n- بيانات الطالب\n- جميع سجلات الصلاة\n\nهذا الإجراء لا يمكن التراجع عنه!`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/user/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ تم حذف الطالب بنجاح!');
+                    loadStudents(); // Reload table
+                } else {
+                    alert('❌ فشل الحذف: ' + data.error);
+                }
+            } catch (error) {
+                alert('❌ خطأ: ' + error.message);
+            }
         }
 
         async function logout() {

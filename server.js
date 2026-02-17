@@ -293,6 +293,28 @@ app.get('/api/admin/student/:id/progress', requireAdmin, async (req, res) => {
   }
 });
 
+// 🗑️ حذف طالب - للمشرف فقط
+app.delete('/api/admin/user/:id', requireAdmin, async (req, res) => {
+  const userId = req.params.id;
+  
+  try {
+    // حذف سجلات الصلاة أولاً
+    await pool.query('DELETE FROM daily_prayers WHERE user_id = $1', [userId]);
+    
+    // حذف المستخدم (التأكد أنه ليس مشرف)
+    const result = await pool.query('DELETE FROM users WHERE id = $1 AND is_admin = 0 RETURNING id', [userId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'الطالب غير موجود أو لا يمكن حذفه' });
+    }
+    
+    res.json({ success: true, message: 'تم حذف الطالب بنجاح' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'فشل في حذف الطالب' });
+  }
+});
+
 // الصفحة الرئيسية
 app.get('/', (req, res) => {
   if (req.session.userId) {
