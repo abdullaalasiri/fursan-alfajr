@@ -23,6 +23,16 @@ async function initDatabase() {
       )
     `);
 
+    // إضافة عمود category إذا مو موجود (migration)
+    try {
+      await client.query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS category TEXT
+      `);
+      console.log('✅ Category column check complete');
+    } catch (err) {
+      console.log('ℹ️ Category column already exists or error:', err.message);
+    }
+
     // إنشاء جدول التسجيل اليومي
     await client.query(`
       CREATE TABLE IF NOT EXISTS daily_prayers (
