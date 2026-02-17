@@ -516,35 +516,33 @@
                 `;
                 return;
             }
-                tbody.innerHTML = students.map(student => {
-                    const rankClass = student.rank === 1 ? 'rank-1' : 
-                                     student.rank === 2 ? 'rank-2' : 
-                                     student.rank === 3 ? 'rank-3' : 'rank-other';
-                    const date = new Date(student.created_at);
-                    const formattedDate = date.toLocaleDateString('ar-BH');
-                    const categoryBadge = student.category || 'غير محدد';
-                    const points = parseInt(student.total_points || 0);
-                    const pointsText = points === 0 ? '0 نقاط' :
-                                      points === 1 ? '1 نقطة' :
-                                      points === 2 ? '2 نقطتان' :
-                                      `${points} نقاط`;
-                    return `
-                        <tr>
-                            <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;"><span class="rank-badge ${rankClass}">#${student.rank}</span></td>
-                            <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;"><strong>${student.full_name}</strong></td>
-                            <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${categoryBadge}</td>
-                            <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${student.username}</td>
-                            <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;"><span class="points-badge">${pointsText}</span></td>
-                            <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${student.days_count} يوم</td>
-                            <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${formattedDate}</td>
-                            <td><button class="delete-btn" onclick="deleteUser(${student.id}, '${student.full_name}')">🗑️ حذف</button></td>
-                        </tr>
-                    `;
-                }).join('');
-            } catch (error) {
-                console.error('Error loading students:', error);
-            }
+            tbody.innerHTML = students.map(student => {
+                const rankClass = student.rank === 1 ? 'rank-1' : 
+                                 student.rank === 2 ? 'rank-2' : 
+                                 student.rank === 3 ? 'rank-3' : 'rank-other';
+                const date = new Date(student.created_at);
+                const formattedDate = date.toLocaleDateString('ar-BH');
+                const categoryBadge = student.category || 'غير محدد';
+                const points = parseInt(student.total_points || 0);
+                const pointsText = points === 0 ? '0 نقاط' :
+                                  points === 1 ? '1 نقطة' :
+                                  points === 2 ? '2 نقطتان' :
+                                  `${points} نقاط`;
+                return `
+                    <tr>
+                        <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;"><span class="rank-badge ${rankClass}">#${student.rank}</span></td>
+                        <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;"><strong>${student.full_name}</strong></td>
+                        <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${categoryBadge}</td>
+                        <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${student.username}</td>
+                        <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;"><span class="points-badge">${pointsText}</span></td>
+                        <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${student.days_count} يوم</td>
+                        <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${formattedDate}</td>
+                        <td><button class="delete-btn" onclick="deleteUser(${student.id}, '${student.full_name}')">🗑️ حذف</button></td>
+                    </tr>
+                `;
+            }).join('');
         }
+
         async function openStudent(id, name) {
             try {
                 const response = await fetch(`/api/admin/student/${id}/progress`);
@@ -709,6 +707,16 @@
             } catch (error) {
                 alert('❌ خطأ: ' + error.message);
             }
+        }
+
+        function closeModal(e) {
+            if (e.target === document.getElementById('modalOverlay')) {
+                document.getElementById('modalOverlay').classList.remove('open');
+            }
+        }
+
+        function closeModalBtn() {
+            document.getElementById('modalOverlay').classList.remove('open');
         }
 
         async function logout() {
