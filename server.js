@@ -16,8 +16,8 @@ app.set('trust proxy', 1);
 
 app.use(session({
   secret: 'fursan-alfajr-secret-2024',
-  resave: false,
-  saveUninitialized: false,
+  resave: true,
+  saveUninitialized: true,
   cookie: { 
     maxAge: 24 * 60 * 60 * 1000,
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
@@ -38,7 +38,14 @@ function getBahrainDate() {
 
 // Middleware: التحقق من تسجيل الدخول
 function requireAuth(req, res, next) {
+  console.log('Session check:', { 
+    sessionID: req.sessionID,
+    userId: req.session?.userId,
+    isAdmin: req.session?.isAdmin 
+  });
+  
   if (!req.session.userId) {
+    console.log('❌ No session userId - redirecting to login');
     return res.redirect('/login.html');
   }
   next();
@@ -114,10 +121,24 @@ app.post('/api/login', async (req, res) => {
     req.session.username = user.username;
     req.session.isAdmin = user.is_admin === 1;
 
-    res.json({
-      success: true,
-      isAdmin: user.is_admin === 1,
-      message: 'تم تسجيل الدخول بنجاح'
+    // Force session save
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ error: 'خطأ في حفظ الجلسة' });
+      }
+      
+      console.log('✅ Login successful:', {
+        userId: user.id,
+        username: user.username,
+        sessionID: req.sessionID
+      });
+
+      res.json({
+        success: true,
+        isAdmin: user.is_admin === 1,
+        message: 'تم تسجيل الدخول بنجاح'
+      });
     });
   } catch (error) {
     console.error(error);
