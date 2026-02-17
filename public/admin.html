@@ -174,9 +174,11 @@
                 font-size: 11px;
                 padding: 4px 8px;
             }
-            /* Hide date column on very small screens */
-            table th:nth-child(6),
-            table td:nth-child(6) {
+            /* Hide category and date columns on very small screens */
+            table th:nth-child(3),
+            table td:nth-child(3),
+            table th:nth-child(7),
+            table td:nth-child(7) {
                 display: none;
             }
         }
@@ -234,20 +236,38 @@
             margin-bottom: 20px;
         }
         .summary-card {
-            background: #f5f5f5;
-            padding: 15px;
-            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 12px;
             text-align: center;
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
         .summary-card h4 {
-            color: #666;
-            font-size: 12px;
-            margin-bottom: 8px;
+            color: rgba(255,255,255,0.9);
+            font-size: 13px;
+            margin-bottom: 10px;
+            font-weight: 500;
         }
         .summary-card .val {
-            color: #667eea;
-            font-size: 24px;
+            color: white;
+            font-size: 32px;
             font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .summary-card .icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+            opacity: 0.9;
+        }
+        .summary-card.total {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .summary-card.days {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .summary-card.streak {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
         .progress-table {
             width: 100%;
@@ -305,17 +325,20 @@
                 <button class="close-btn" onclick="closeModalBtn()">✕ إغلاق</button>
             </div>
             <div class="progress-summary">
-                <div class="summary-card">
+                <div class="summary-card total">
+                    <div class="icon">⭐</div>
                     <h4>إجمالي النقاط</h4>
                     <div class="val" id="modalTotal">0</div>
                 </div>
-                <div class="summary-card">
-                    <h4>أيام التسجيل</h4>
+                <div class="summary-card days">
+                    <div class="icon">📅</div>
+                    <h4>أيام الحضور</h4>
                     <div class="val" id="modalDays">0</div>
                 </div>
-                <div class="summary-card">
-                    <h4>أيام الجماعة</h4>
-                    <div class="val" id="modalJamaah">0</div>
+                <div class="summary-card streak">
+                    <div class="icon">🔥</div>
+                    <h4>أطول سلسلة</h4>
+                    <div class="val" id="modalStreak">0</div>
                 </div>
             </div>
             <div style="overflow-x:auto;">
@@ -363,6 +386,7 @@
                     <tr>
                         <th>الترتيب</th>
                         <th>الاسم</th>
+                        <th>الفئة</th>
                         <th>اسم المستخدم</th>
                         <th>إجمالي النقاط</th>
                         <th>عدد الأيام</th>
@@ -371,7 +395,7 @@
                 </thead>
                 <tbody id="studentsTable">
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 30px;">
+                        <td colspan="7" style="text-align: center; padding: 30px;">
                             جاري تحميل البيانات...
                         </td>
                     </tr>
@@ -441,12 +465,19 @@
                                      student.rank === 3 ? 'rank-3' : 'rank-other';
                     const date = new Date(student.created_at);
                     const formattedDate = date.toLocaleDateString('ar-BH');
+                    const categoryBadge = student.category || 'غير محدد';
+                    const points = parseInt(student.total_points || 0);
+                    const pointsText = points === 0 ? '0 نقاط' :
+                                      points === 1 ? '1 نقطة' :
+                                      points === 2 ? '2 نقطتان' :
+                                      `${points} نقاط`;
                     return `
                         <tr onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">
                             <td><span class="rank-badge ${rankClass}">#${student.rank}</span></td>
                             <td><strong>${student.full_name}</strong></td>
+                            <td>${categoryBadge}</td>
                             <td>${student.username}</td>
-                            <td><span class="points-badge">${student.total_points} نقطة</span></td>
+                            <td><span class="points-badge">${pointsText}</span></td>
                             <td>${student.days_count} يوم</td>
                             <td>${formattedDate}</td>
                         </tr>
@@ -465,12 +496,38 @@
                 document.getElementById('modalTitle').textContent = `📊 تقدم ${name}`;
 
                 const records = data.records;
-                const totalPoints = records.reduce((s, r) => s + r.total_points, 0);
-                const jamaahDays = records.filter(r => r.fajr_jamaah > 0).length;
+                const totalPoints = records.reduce((s, r) => s + parseInt(r.total_points || 0), 0);
+                
+                // حساب أطول سلسلة متواصلة
+                let maxStreak = 0;
+                let currentStreak = 0;
+                
+                // ترتيب السجلات بالتاريخ
+                const sortedRecords = [...records].sort((a, b) => 
+                    new Date(a.prayer_date) - new Date(b.prayer_date)
+                );
+                
+                for (let i = 0; i < sortedRecords.length; i++) {
+                    currentStreak++;
+                    
+                    // التحقق إذا في فجوة بين هذا اليوم والتالي
+                    if (i < sortedRecords.length - 1) {
+                        const currentDate = new Date(sortedRecords[i].prayer_date);
+                        const nextDate = new Date(sortedRecords[i + 1].prayer_date);
+                        const diffDays = (nextDate - currentDate) / (1000 * 60 * 60 * 24);
+                        
+                        if (diffDays > 1) {
+                            maxStreak = Math.max(maxStreak, currentStreak);
+                            currentStreak = 0;
+                        }
+                    }
+                }
+                maxStreak = Math.max(maxStreak, currentStreak);
 
                 document.getElementById('modalTotal').textContent = totalPoints;
                 document.getElementById('modalDays').textContent = records.length;
-                document.getElementById('modalJamaah').textContent = jamaahDays;
+                document.getElementById('modalStreak').textContent = maxStreak;
+
 
                 const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
                                  'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
@@ -508,13 +565,18 @@
                     const rec = recordMap[dateStr];
 
                     if (rec) {
+                        const pts = rec.total_points;
+                        const ptsText = pts === 0 ? '0 نقاط' :
+                                       pts === 1 ? '1 نقطة' :
+                                       pts === 2 ? '2 نقطتان' :
+                                       `${pts} نقاط`;
                         rows += `
                             <tr>
                                 <td>${fullLabel}</td>
                                 <td>${rec.sunnah_fajr ? '<span class="check">✔</span>' : '<span class="cross">✗</span>'}</td>
                                 <td>${rec.fajr_jamaah ? '<span class="check">✔</span>' : '<span class="cross">✗</span>'}</td>
                                 <td>${rec.fajr_ontime ? '<span class="check">✔</span>' : '<span class="cross">✗</span>'}</td>
-                                <td><span class="day-points">${rec.total_points} نقطة</span></td>
+                                <td><span class="day-points">${ptsText}</span></td>
                             </tr>`;
                     } else {
                         rows += `
