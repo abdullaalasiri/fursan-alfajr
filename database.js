@@ -1,5 +1,5 @@
 const { Pool } = require('pg');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 // الاتصال بـ PostgreSQL عبر DATABASE_URL
 const pool = new Pool({
