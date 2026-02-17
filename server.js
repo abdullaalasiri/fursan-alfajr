@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const db = require('./database');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
@@ -22,6 +22,40 @@ function getBahrainDate() {
   const now = new Date();
   const bahrainTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Bahrain' }));
   return bahrainTime.toISOString().split('T')[0];
+}
+
+// Helper: تحويل التاريخ الميلادي إلى هجري
+function toHijri(date) {
+  const d = new Date(date);
+  // حساب التاريخ الهجري
+  const jd = Math.floor((d.getTime() / 86400000) + 2440587.5);
+  let l = jd - 1948440 + 10632;
+  const n = Math.floor((l - 1) / 10631);
+  l = l - 10631 * n + 354;
+  const j = Math.floor((10985 - l) / 5316) * Math.floor((50 * l) / 17719) +
+            Math.floor(l / 5670) * Math.floor((43 * l) / 15238);
+  l = l - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) -
+      Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
+  const month = Math.floor((24 * l) / 709);
+  const day = l - Math.floor((709 * month) / 24);
+  const year = 30 * n + j - 30;
+  return { day, month, year };
+}
+
+// Helper: اسم الشهر الهجري
+function hijriMonthName(month) {
+  const months = [
+    'محرم', 'صفر', 'ربيع الأول', 'ربيع الثاني',
+    'جمادى الأولى', 'جمادى الثانية', 'رجب', 'شعبان',
+    'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'
+  ];
+  return months[month - 1];
+}
+
+// Helper: اليوم الهجري كاملاً
+function getHijriLabel(dateStr) {
+  const hijri = toHijri(dateStr);
+  return `${hijriMonthName(hijri.month)} ${hijri.day}`;
 }
 
 // Middleware: التحقق من تسجيل الدخول
@@ -117,6 +151,13 @@ app.post('/api/logout', (req, res) => {
   res.json({ success: true });
 });
 
+// الحصول على التاريخ الهجري اليوم
+app.get('/api/today-hijri', requireAuth, (req, res) => {
+  const today = getBahrainDate();
+  const label = getHijriLabel(today);
+  res.json({ label, date: today });
+});
+
 // الحصول على بيانات المستخدم الحالي
 app.get('/api/me', requireAuth, (req, res) => {
   db.get('SELECT id, username, full_name, is_admin FROM users WHERE id = ?', [req.session.userId], (err, user) => {
@@ -136,17 +177,18 @@ app.get('/api/me', requireAuth, (req, res) => {
 
 // تسجيل الصلاة اليومية
 app.post('/api/record-prayer', requireAuth, (req, res) => {
-  const { sunnahFajr, fajrPrayer } = req.body;
+  const { sunnahFajr, fajrJamaah, fajrOntime } = req.body;
   const today = getBahrainDate();
   const userId = req.session.userId;
 
-  if (typeof sunnahFajr !== 'boolean' || typeof fajrPrayer !== 'boolean') {
+  if (typeof sunnahFajr !== 'boolean' || typeof fajrJamaah !== 'boolean' || typeof fajrOntime !== 'boolean') {
     return res.status(400).json({ error: 'بيانات غير صحيحة' });
   }
 
   const sunnahPoints = sunnahFajr ? 1 : 0;
-  const fajrPoints = fajrPrayer ? 1 : 0;
-  const totalPoints = sunnahPoints + fajrPoints;
+  const jamaahPoints = fajrJamaah ? 3 : 0;
+  const ontimePoints = fajrOntime ? 1 : 0;
+  const totalPoints = sunnahPoints + jamaahPoints + ontimePoints;
 
   // التحقق من عدم وجود تسجيل
   db.get('SELECT id FROM daily_prayers WHERE user_id = ? AND prayer_date = ?', [userId, today], (err, existing) => {
@@ -160,8 +202,8 @@ app.post('/api/record-prayer', requireAuth, (req, res) => {
 
     // إضافة التسجيل
     db.run(
-      'INSERT INTO daily_prayers (user_id, prayer_date, sunnah_fajr, fajr_prayer, total_points) VALUES (?, ?, ?, ?, ?)',
-      [userId, today, sunnahPoints, fajrPoints, totalPoints],
+      'INSERT INTO daily_prayers (user_id, prayer_date, sunnah_fajr, fajr_jamaah, fajr_ontime, total_points) VALUES (?, ?, ?, ?, ?, ?)',
+      [userId, today, sunnahPoints, jamaahPoints, ontimePoints, totalPoints],
       (err) => {
         if (err) {
           return res.status(500).json({ error: 'خطأ في حفظ البيانات' });
@@ -212,6 +254,32 @@ app.get('/api/leaderboard', requireAuth, (req, res) => {
       return res.status(500).json({ error: 'خطأ في السيرفر' });
     }
     res.json(leaderboard);
+  });
+});
+
+// تفاصيل تقدم الطالب - من أول رمضان حتى اليوم
+app.get('/api/admin/student/:id/progress', requireAdmin, (req, res) => {
+  const studentId = req.params.id;
+
+  // بيانات الطالب
+  db.get('SELECT id, username, full_name FROM users WHERE id = ? AND is_admin = 0', [studentId], (err, student) => {
+    if (err || !student) {
+      return res.status(404).json({ error: 'الطالب غير موجود' });
+    }
+
+    // كل سجلات الطالب مرتبة بالتاريخ
+    db.all(`
+      SELECT prayer_date, sunnah_fajr, fajr_jamaah, fajr_ontime, total_points
+      FROM daily_prayers
+      WHERE user_id = ?
+      ORDER BY prayer_date ASC
+    `, [studentId], (err, records) => {
+      if (err) {
+        return res.status(500).json({ error: 'خطأ في السيرفر' });
+      }
+
+      res.json({ student, records });
+    });
   });
 });
 

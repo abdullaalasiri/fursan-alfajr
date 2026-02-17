@@ -33,7 +33,8 @@ function initDatabase() {
         user_id INTEGER NOT NULL,
         prayer_date DATE NOT NULL,
         sunnah_fajr INTEGER DEFAULT 0,
-        fajr_prayer INTEGER DEFAULT 0,
+        fajr_jamaah INTEGER DEFAULT 0,
+        fajr_ontime INTEGER DEFAULT 0,
         total_points INTEGER DEFAULT 0,
         recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id),
@@ -55,6 +56,12 @@ function initDatabase() {
           console.log('✅ حساب الادمن جاهز');
           console.log('📝 Username: admin');
           console.log('📝 Password: admin123');
+          console.log('');
+          console.log('📊 نظام النقاط:');
+          console.log('   - سنة الفجر: 1 نقطة');
+          console.log('   - الفجر جماعة في المسجد: 3 نقاط');
+          console.log('   - الفجر في وقتها: 1 نقطة');
+          console.log('   - أقصى نقاط يومياً: 4 نقاط');
         }
       }
     );

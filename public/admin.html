@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>فرسان الفجر - لوحة الإدارة</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -84,149 +84,256 @@
         .points-badge {
             background: #4caf50;
             color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 13px;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        /* ========== Mobile Responsive ========== */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                max-width: 100%;
+            }
+            .header {
+                padding: 15px;
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+            .header h1 {
+                font-size: 18px;
+            }
+            .header-right {
+                flex-direction: column;
+                width: 100%;
+                gap: 10px;
+            }
+            .admin-badge, .logout-btn {
+                width: 100%;
+                font-size: 14px;
+                padding: 10px 15px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .stat-card {
+                padding: 20px;
+            }
+            .stat-card .number {
+                font-size: 28px;
+            }
+            .table-card {
+                padding: 15px;
+                overflow-x: auto;
+            }
+            .table-card h2 {
+                font-size: 18px;
+            }
+            table {
+                font-size: 12px;
+            }
+            th, td {
+                padding: 8px 6px;
+            }
+            .rank-badge {
+                font-size: 11px;
+                padding: 3px 7px;
+                min-width: 28px;
+            }
+            .points-badge {
+                font-size: 12px;
+                padding: 5px 10px;
+                white-space: nowrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 16px;
+            }
+            .stat-card .number {
+                font-size: 24px;
+            }
+            .stat-card h3 {
+                font-size: 12px;
+            }
+            table {
+                font-size: 11px;
+            }
+            th, td {
+                padding: 6px 4px;
+            }
+            .points-badge {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+            /* Hide date column on very small screens */
+            table th:nth-child(6),
+            table td:nth-child(6) {
+                display: none;
+            }
+        }
+        /* ========== Modal ========== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+        .modal {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 100%;
+            max-width: 700px;
+            margin: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+        }
+        .modal-header h2 {
+            color: #667eea;
+            font-size: 20px;
+        }
+        .close-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .progress-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .summary-card h4 {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .summary-card .val {
+            color: #667eea;
+            font-size: 24px;
             font-weight: bold;
         }
-        /* ========== Mobile Responsive ========== */
-@media (max-width: 768px) {
-    body {
-        padding: 10px;
-    }
-    
-    .container {
-        max-width: 100% !important;
-    }
-    
-    .header {
-        padding: 15px !important;
-        flex-direction: column;
-        gap: 15px;
-        text-align: center;
-    }
-    
-    .header h1 {
-        font-size: 20px !important;
-    }
-    
-    .user-info {
-        flex-direction: column;
-        width: 100%;
-        gap: 10px;
-    }
-    
-    .logout-btn, .admin-badge {
-        width: 100%;
-        font-size: 14px !important;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr !important;
-        gap: 15px !important;
-    }
-    
-    .stat-card {
-        padding: 20px !important;
-    }
-    
-    .stat-card .number {
-        font-size: 28px !important;
-    }
-    
-    .prayer-card, .table-card {
-        padding: 20px !important;
-    }
-    
-    .prayer-card h2, .table-card h2 {
-        font-size: 18px !important;
-    }
-    
-    .checkbox-item {
-        padding: 15px !important;
-    }
-    
-    .checkbox-item label {
-        font-size: 16px !important;
-    }
-    
-    .save-btn {
-        padding: 12px !important;
-        font-size: 16px !important;
-    }
-    
-    /* Login page */
-    .logo h1 {
-        font-size: 24px !important;
-    }
-    
-    .logo p {
-        font-size: 12px !important;
-    }
-    
-    .tab {
-        padding: 12px 10px !important;
-        font-size: 14px !important;
-    }
-    
-    input {
-        font-size: 14px !important;
-        padding: 10px !important;
-    }
-    
-    .btn {
-        font-size: 16px !important;
-        padding: 12px !important;
-    }
-    
-    /* Admin table */
-    table {
-        font-size: 12px !important;
-    }
-    
-    th, td {
-        padding: 10px 8px !important;
-    }
-    
-    .rank-badge {
-        font-size: 12px !important;
-        padding: 3px 8px !important;
-        min-width: 30px !important;
-    }
-    
-    .points-badge {
-        font-size: 12px !important;
-        padding: 3px 10px !important;
-    }
-    
-    /* Hide some columns on very small screens */
-    @media (max-width: 480px) {
-        table th:nth-child(6),
-        table td:nth-child(6) {
-            display: none;
+        .progress-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
         }
-    }
-}
-
-@media (max-width: 480px) {
-    .header h1 {
-        font-size: 18px !important;
-    }
-    
-    .stat-card .number {
-        font-size: 24px !important;
-    }
-    
-    .checkbox-item label {
-        font-size: 14px !important;
-    }
-    
-    .prayer-card h2 {
-        font-size: 16px !important;
-    }
-}
+        .progress-table thead {
+            background: #667eea;
+            color: white;
+        }
+        .progress-table th {
+            padding: 10px;
+            text-align: right;
+        }
+        .progress-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            text-align: right;
+        }
+        .progress-table tr:hover {
+            background: #f9f9f9;
+        }
+        .check { color: #4caf50; font-weight: bold; }
+        .cross { color: #ccc; }
+        .day-points {
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .no-record {
+            color: #f44336;
+            font-size: 12px;
+        }
+        @media (max-width: 480px) {
+            .modal { padding: 15px; }
+            .modal-header h2 { font-size: 16px; }
+            .progress-summary { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .summary-card { padding: 10px; }
+            .summary-card .val { font-size: 18px; }
+            .progress-table { font-size: 12px; }
+            .progress-table th, .progress-table td { padding: 7px 5px; }
+        }
     </style>
 </head>
 <body>
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">تقدم الطالب</h2>
+                <button class="close-btn" onclick="closeModalBtn()">✕ إغلاق</button>
+            </div>
+            <div class="progress-summary">
+                <div class="summary-card">
+                    <h4>إجمالي النقاط</h4>
+                    <div class="val" id="modalTotal">0</div>
+                </div>
+                <div class="summary-card">
+                    <h4>أيام التسجيل</h4>
+                    <div class="val" id="modalDays">0</div>
+                </div>
+                <div class="summary-card">
+                    <h4>أيام الجماعة</h4>
+                    <div class="val" id="modalJamaah">0</div>
+                </div>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="progress-table">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>سنة الفجر</th>
+                            <th>جماعة</th>
+                            <th>في وقتها</th>
+                            <th>النقاط</th>
+                        </tr>
+                    </thead>
+                    <tbody id="progressTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
     <div class="container">
         <div class="header">
             <h1>🛡️ فرسان الفجر - لوحة الإدارة</h1>
@@ -304,7 +411,7 @@
                     const date = new Date(student.created_at);
                     const formattedDate = date.toLocaleDateString('ar-BH');
                     return `
-                        <tr>
+                        <tr onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">
                             <td><span class="rank-badge ${rankClass}">#${student.rank}</span></td>
                             <td><strong>${student.full_name}</strong></td>
                             <td>${student.username}</td>
@@ -318,6 +425,95 @@
                 console.error('Error loading students:', error);
             }
         }
+        async function openStudent(id, name) {
+            try {
+                const response = await fetch(`/api/admin/student/${id}/progress`);
+                if (!response.ok) return;
+                const data = await response.json();
+
+                document.getElementById('modalTitle').textContent = `📊 تقدم ${name}`;
+
+                const records = data.records;
+                const totalPoints = records.reduce((s, r) => s + r.total_points, 0);
+                const jamaahDays = records.filter(r => r.fajr_jamaah > 0).length;
+
+                document.getElementById('modalTotal').textContent = totalPoints;
+                document.getElementById('modalDays').textContent = records.length;
+                document.getElementById('modalJamaah').textContent = jamaahDays;
+
+                const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+                                 'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+                // بناء map للسجلات
+                const recordMap = {};
+                records.forEach(r => { recordMap[r.prayer_date] = r; });
+
+                // تحديد تاريخ البداية والنهاية
+                const todayLocal = new Date();
+                const todayStr = todayLocal.getFullYear() + '-' +
+                    String(todayLocal.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(todayLocal.getDate()).padStart(2, '0');
+
+                let startStr;
+                if (records.length > 0) {
+                    startStr = records[0].prayer_date;
+                } else {
+                    startStr = todayStr;
+                }
+
+                // توليد كل الأيام
+                let rows = '';
+                let current = new Date(startStr + 'T00:00:00');
+                const end = new Date(todayStr + 'T00:00:00');
+
+                while (current <= end) {
+                    const y = current.getFullYear();
+                    const mo = String(current.getMonth() + 1).padStart(2, '0');
+                    const d = String(current.getDate()).padStart(2, '0');
+                    const dateStr = `${y}-${mo}-${d}`;
+                    const label = `${months[current.getMonth()]} ${current.getDate()}`;
+                    const rec = recordMap[dateStr];
+
+                    if (rec) {
+                        rows += `
+                            <tr>
+                                <td>${label}</td>
+                                <td>${rec.sunnah_fajr ? '<span class="check">✔</span>' : '<span class="cross">✗</span>'}</td>
+                                <td>${rec.fajr_jamaah ? '<span class="check">✔</span>' : '<span class="cross">✗</span>'}</td>
+                                <td>${rec.fajr_ontime ? '<span class="check">✔</span>' : '<span class="cross">✗</span>'}</td>
+                                <td><span class="day-points">${rec.total_points} نقطة</span></td>
+                            </tr>`;
+                    } else {
+                        rows += `
+                            <tr>
+                                <td>${label}</td>
+                                <td colspan="4" style="text-align:center;" class="no-record">لم يسجل</td>
+                            </tr>`;
+                    }
+
+                    current.setDate(current.getDate() + 1);
+                }
+
+                document.getElementById('progressTableBody').innerHTML = rows || 
+                    '<tr><td colspan="5" style="text-align:center;color:#999;padding:20px;">لا توجد سجلات</td></tr>';
+
+                document.getElementById('modalOverlay').classList.add('open');
+
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function closeModal(e) {
+            if (e.target === document.getElementById('modalOverlay')) {
+                document.getElementById('modalOverlay').classList.remove('open');
+            }
+        }
+
+        function closeModalBtn() {
+            document.getElementById('modalOverlay').classList.remove('open');
+        }
+
         async function logout() {
             await fetch('/api/logout', { method: 'POST' });
             window.location.href = '/login.html';

@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>فرسان الفجر - لوحة الطالب</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -71,8 +71,11 @@
         }
         .checkbox-item:hover { background: #e8e8e8; }
         .checkbox-item.checked { background: #e8f5e9; border-color: #4caf50; }
+        .checkbox-item.disabled { opacity: 0.5; cursor: not-allowed; }
         .checkbox-item input[type="checkbox"] { width: 24px; height: 24px; cursor: pointer; }
+        .checkbox-item input[type="checkbox"]:disabled { cursor: not-allowed; }
         .checkbox-item label { font-size: 18px; font-weight: 600; cursor: pointer; flex: 1; }
+        .checkbox-item .points { color: #4caf50; font-weight: bold; }
         .save-btn {
             width: 100%;
             padding: 15px;
@@ -105,142 +108,38 @@
         }
         .recorded-message h3 { color: #856404; margin-bottom: 10px; }
         .recorded-message p { color: #856404; }
-        /* ========== Mobile Responsive ========== */
-@media (max-width: 768px) {
-    body {
-        padding: 10px;
-    }
-    
-    .container {
-        max-width: 100% !important;
-    }
-    
-    .header {
-        padding: 15px !important;
-        flex-direction: column;
-        gap: 15px;
-        text-align: center;
-    }
-    
-    .header h1 {
-        font-size: 20px !important;
-    }
-    
-    .user-info {
-        flex-direction: column;
-        width: 100%;
-        gap: 10px;
-    }
-    
-    .logout-btn, .admin-badge {
-        width: 100%;
-        font-size: 14px !important;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr !important;
-        gap: 15px !important;
-    }
-    
-    .stat-card {
-        padding: 20px !important;
-    }
-    
-    .stat-card .number {
-        font-size: 28px !important;
-    }
-    
-    .prayer-card, .table-card {
-        padding: 20px !important;
-    }
-    
-    .prayer-card h2, .table-card h2 {
-        font-size: 18px !important;
-    }
-    
-    .checkbox-item {
-        padding: 15px !important;
-    }
-    
-    .checkbox-item label {
-        font-size: 16px !important;
-    }
-    
-    .save-btn {
-        padding: 12px !important;
-        font-size: 16px !important;
-    }
-    
-    /* Login page */
-    .logo h1 {
-        font-size: 24px !important;
-    }
-    
-    .logo p {
-        font-size: 12px !important;
-    }
-    
-    .tab {
-        padding: 12px 10px !important;
-        font-size: 14px !important;
-    }
-    
-    input {
-        font-size: 14px !important;
-        padding: 10px !important;
-    }
-    
-    .btn {
-        font-size: 16px !important;
-        padding: 12px !important;
-    }
-    
-    /* Admin table */
-    table {
-        font-size: 12px !important;
-    }
-    
-    th, td {
-        padding: 10px 8px !important;
-    }
-    
-    .rank-badge {
-        font-size: 12px !important;
-        padding: 3px 8px !important;
-        min-width: 30px !important;
-    }
-    
-    .points-badge {
-        font-size: 12px !important;
-        padding: 3px 10px !important;
-    }
-    
-    /* Hide some columns on very small screens */
-    @media (max-width: 480px) {
-        table th:nth-child(6),
-        table td:nth-child(6) {
-            display: none;
-        }
-    }
-}
 
-@media (max-width: 480px) {
-    .header h1 {
-        font-size: 18px !important;
-    }
-    
-    .stat-card .number {
-        font-size: 24px !important;
-    }
-    
-    .checkbox-item label {
-        font-size: 14px !important;
-    }
-    
-    .prayer-card h2 {
-        font-size: 16px !important;
-    }
-}
+        /* ========== Mobile Responsive ========== */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container { max-width: 100%; }
+            .header { padding: 15px; flex-direction: column; gap: 12px; text-align: center; }
+            .header h1 { font-size: 20px; }
+            .user-info { flex-direction: column; width: 100%; gap: 10px; }
+            .logout-btn { width: 100%; font-size: 14px; padding: 10px 15px; }
+            .stats-grid { grid-template-columns: 1fr; gap: 12px; }
+            .stat-card { padding: 20px; }
+            .stat-card .number { font-size: 30px; }
+            .prayer-card { padding: 20px; }
+            .prayer-card h2 { font-size: 18px; }
+            .checkbox-item { padding: 15px; }
+            .checkbox-item label { font-size: 16px; }
+            .save-btn { padding: 13px; font-size: 16px; }
+            .recorded-message { padding: 15px; }
+            .recorded-message h3 { font-size: 16px; }
+            .recorded-message p { font-size: 14px; }
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 8px; }
+            .header h1 { font-size: 18px; }
+            .stat-card .number { font-size: 26px; }
+            .prayer-card h2 { font-size: 16px; }
+            .checkbox-item { padding: 12px; }
+            .checkbox-item label { font-size: 14px; }
+            .checkbox-item input[type="checkbox"] { width: 20px; height: 20px; }
+            .save-btn { padding: 12px; font-size: 15px; }
+        }
     </style>
 </head>
 <body>
@@ -265,16 +164,20 @@
         </div>
         <div id="recordedMessage" class="recorded-message" style="display: none;"></div>
         <div id="prayerCard" class="prayer-card">
-            <h2>تسجيل صلاة اليوم</h2>
+            <h2>تسجيل صلاة اليوم - <span id="todayDate">...</span></h2>
             <form onsubmit="savePrayer(event)">
                 <div class="checkbox-group">
                     <div class="checkbox-item" onclick="toggleCheck('sunnahFajr')">
                         <input type="checkbox" id="sunnahFajr" name="sunnahFajr">
-                        <label for="sunnahFajr">صليت سنة الفجر (+1 نقطة)</label>
+                        <label for="sunnahFajr">صليت سنة الفجر <span class="points">(+1)</span></label>
                     </div>
-                    <div class="checkbox-item" onclick="toggleCheck('fajrPrayer')">
-                        <input type="checkbox" id="fajrPrayer" name="fajrPrayer">
-                        <label for="fajrPrayer">صليت الفجر (+1 نقطة)</label>
+                    <div class="checkbox-item" id="jamaahItem" onclick="toggleCheck('fajrJamaah')">
+                        <input type="checkbox" id="fajrJamaah" name="fajrJamaah">
+                        <label for="fajrJamaah">صليت الفجر جماعة في المسجد <span class="points">(+3)</span></label>
+                    </div>
+                    <div class="checkbox-item" id="ontimeItem" onclick="toggleCheck('fajrOntime')">
+                        <input type="checkbox" id="fajrOntime" name="fajrOntime">
+                        <label for="fajrOntime">صليت الفجر في وقتها <span class="points">(+1)</span></label>
                     </div>
                 </div>
                 <button type="submit" class="save-btn">💾 حفظ التسجيل</button>
@@ -282,8 +185,23 @@
         </div>
     </div>
     <script>
+        // الحصول على التاريخ بالعربي (اسم الشهر الميلادي + رقم اليوم)
+        function getTodayLabel() {
+            const now = new Date();
+            const months = [
+                'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+                'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+            ];
+            const day = now.getDate();
+            const month = months[now.getMonth()];
+            return `${month} ${day}`;
+        }
+
         async function loadData() {
             try {
+                // عرض التاريخ
+                document.getElementById('todayDate').textContent = getTodayLabel();
+
                 const meResponse = await fetch('/api/me');
                 if (!meResponse.ok) {
                     window.location.href = '/login.html';
@@ -309,15 +227,22 @@
         function showRecordedMessage(record) {
             const message = document.getElementById('recordedMessage');
             message.style.display = 'block';
+            
+            let details = [];
+            if (record.sunnah_fajr) details.push('سنة الفجر ✅');
+            if (record.fajr_jamaah) details.push('الفجر جماعة في المسجد ✅');
+            if (record.fajr_ontime) details.push('الفجر في وقتها ✅');
+            
             message.innerHTML = `
-                <h3>✅ تم التسجيل لهذا اليوم</h3>
-                <p>سنة الفجر: ${record.sunnah_fajr ? '✅' : '❌'} | صلاة الفجر: ${record.fajr_prayer ? '✅' : '❌'}</p>
+                <h3>✅ تم التسجيل - ${getTodayLabel()}</h3>
+                <p>${details.join(' | ')}</p>
                 <p>النقاط: ${record.total_points}</p>
             `;
         }
         
         function toggleCheck(id) {
             const checkbox = document.getElementById(id);
+            if (checkbox.disabled) return;
             checkbox.checked = !checkbox.checked;
             checkbox.parentElement.classList.toggle('checked', checkbox.checked);
         }
@@ -325,10 +250,11 @@
         async function savePrayer(e) {
             e.preventDefault();
             const sunnahFajr = document.getElementById('sunnahFajr').checked;
-            const fajrPrayer = document.getElementById('fajrPrayer').checked;
+            const fajrJamaah = document.getElementById('fajrJamaah').checked;
+            const fajrOntime = document.getElementById('fajrOntime').checked;
             
-            if (!sunnahFajr && !fajrPrayer) {
-                showAlert('اختر على الأقل صلاة واحدة', 'error');
+            if (!sunnahFajr && !fajrJamaah && !fajrOntime) {
+                showAlert('اختر على الأقل خيار واحد', 'error');
                 return;
             }
             
@@ -336,7 +262,7 @@
                 const response = await fetch('/api/record-prayer', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sunnahFajr, fajrPrayer })
+                    body: JSON.stringify({ sunnahFajr, fajrJamaah, fajrOntime })
                 });
                 const data = await response.json();
                 
