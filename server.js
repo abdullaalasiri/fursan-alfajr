@@ -225,21 +225,35 @@ app.get('/api/my-stats', requireAuth, async (req, res) => {
   const userId = req.session.userId;
 
   try {
+    // جلب معلومات الطالب مع فئته
+    const userInfo = await pool.query(
+      'SELECT category FROM users WHERE id = $1',
+      [userId]
+    );
+    const userCategory = userInfo.rows[0]?.category;
+
     const totalResult = await pool.query(
       'SELECT COALESCE(SUM(total_points), 0) as total FROM daily_prayers WHERE user_id = $1',
       [userId]
     );
 
-    const leaderboard = await pool.query(
-      'SELECT user_id, SUM(total_points) as total FROM daily_prayers GROUP BY user_id ORDER BY total DESC'
-    );
+    // ترتيب داخل نفس الفئة فقط
+    const leaderboard = await pool.query(`
+      SELECT u.id as user_id, COALESCE(SUM(dp.total_points), 0) as total 
+      FROM users u
+      LEFT JOIN daily_prayers dp ON u.id = dp.user_id
+      WHERE u.is_admin = 0 AND u.category = $1
+      GROUP BY u.id
+      ORDER BY total DESC
+    `, [userCategory]);
 
     const rank = leaderboard.rows.findIndex(item => item.user_id === userId) + 1;
 
     res.json({
       totalPoints: parseInt(totalResult.rows[0].total),
-      rank,
-      totalStudents: leaderboard.rows.length
+      rank: rank > 0 ? rank : '-',
+      totalStudents: leaderboard.rows.length,
+      category: userCategory
     });
   } catch (error) {
     console.error(error);
