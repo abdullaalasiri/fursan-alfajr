@@ -450,9 +450,11 @@
     <script>
         // تحويل التاريخ الميلادي إلى هجري
         function toHijri(date) {
-            // بداية رمضان 1446: 1 مارس 2025
-            const ramadanStart = new Date('2025-03-01');
+            // بداية رمضان 1446: فبراير 28، 2025 (رمضان 1)
+            const ramadanStart = new Date('2025-02-28');
             const currentDate = new Date(date);
+            currentDate.setHours(0, 0, 0, 0);
+            ramadanStart.setHours(0, 0, 0, 0);
             
             // حساب الفرق بالأيام
             const diffTime = currentDate - ramadanStart;
@@ -460,9 +462,9 @@
             
             // إذا قبل رمضان
             if (diffDays < 0) {
-                // شعبان
-                const shabbanDay = 30 + diffDays;
-                return { day: shabbanDay, month: 8, year: 1446 };
+                // شعبان (30 يوم)
+                const shabbanDay = 30 + diffDays + 1;
+                return { day: shabbanDay > 0 ? shabbanDay : 1, month: 8, year: 1446 };
             }
             
             // إذا في رمضان (30 يوم)
