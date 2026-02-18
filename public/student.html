@@ -46,9 +46,45 @@
             border-radius: 15px;
             text-align: center;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
         }
-        .stat-card h3 { color: #666; font-size: 14px; margin-bottom: 10px; }
-        .stat-card .number { color: #667eea; font-size: 36px; font-weight: bold; }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .stat-card h3 { 
+            color: #666; 
+            font-size: 14px; 
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        .stat-card .number { 
+            color: #667eea; 
+            font-size: 36px; 
+            font-weight: bold; 
+        }
+        .rank-display {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            margin-top: 5px;
+        }
+        .category-label {
+            display: inline-block;
+            background: #f5f5f5;
+            color: #667eea;
+            padding: 6px 16px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+            border: 2px solid #667eea;
+        }
         .prayer-card {
             background: white;
             padding: 30px;
@@ -159,8 +195,8 @@
             </div>
             <div class="stat-card">
                 <h3>ترتيبك</h3>
-                <div class="number" id="rank">-</div>
-                <div style="font-size: 12px; color: #999; margin-top: 5px;" id="categoryLabel"></div>
+                <div class="rank-display" id="rank">-</div>
+                <div class="category-label" id="categoryLabel"></div>
             </div>
         </div>
         <div id="recordedMessage" class="recorded-message" style="display: none;"></div>
@@ -267,8 +303,8 @@
                 document.getElementById('totalPoints').textContent = stats.totalPoints;
                 
                 if (stats.rank > 0 && stats.totalStudents > 0) {
-                    document.getElementById('rank').textContent = `${stats.rank} من ${stats.totalStudents}`;
-                    document.getElementById('categoryLabel').textContent = `(${stats.category || 'جميع الفئات'})`;
+                    document.getElementById('rank').textContent = `${stats.rank} / ${stats.totalStudents}`;
+                    document.getElementById('categoryLabel').textContent = `${stats.category || 'جميع الفئات'}`;
                 } else {
                     document.getElementById('rank').textContent = '-';
                 }
