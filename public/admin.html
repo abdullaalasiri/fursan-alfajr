@@ -315,9 +315,31 @@
             font-size: 12px;
             font-weight: 600;
             transition: background 0.3s;
+            margin: 2px;
         }
         .delete-btn:hover {
             background: #d32f2f;
+        }
+        .reset-btn {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.3s;
+            margin: 2px;
+        }
+        .reset-btn:hover {
+            background: #f57c00;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
         .search-box {
             background: white;
@@ -434,7 +456,7 @@
                         <th>إجمالي النقاط</th>
                         <th>عدد الأيام</th>
                         <th>تاريخ التسجيل</th>
-                        <th>إجراء</th>
+                        <th>إجراءات</th>
                     </tr>
                 </thead>
                 <tbody id="studentsTable">
@@ -549,7 +571,12 @@
                         <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;"><span class="points-badge">${pointsText}</span></td>
                         <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${student.days_count} يوم</td>
                         <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${formattedDate}</td>
-                        <td><button class="delete-btn" onclick="deleteUser(${student.id}, '${student.full_name}')">🗑️ حذف</button></td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="reset-btn" onclick="resetPassword(${student.id}, '${student.full_name}', '${student.username}')">🔑</button>
+                                <button class="delete-btn" onclick="deleteUser(${student.id}, '${student.full_name}')">🗑️</button>
+                            </div>
+                        </td>
                     </tr>
                 `;
             }).join('');
@@ -696,6 +723,29 @@
             });
             
             renderStudents(filtered);
+        }
+
+        async function resetPassword(id, name, username) {
+            if (!confirm(`🔑 إعادة تعيين كلمة المرور للطالب "${name}"؟\n\nسيتم توليد كلمة مرور جديدة تلقائياً.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/reset-password/${id}`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // عرض كلمة المرور الجديدة
+                    alert(`✅ تم إعادة تعيين كلمة المرور بنجاح!\n\n👤 الطالب: ${data.fullName}\n🔐 اسم المستخدم: ${data.username}\n🔑 كلمة المرور الجديدة: ${data.newPassword}\n\n⚠️ احفظ كلمة المرور وأعطها للطالب!`);
+                } else {
+                    alert('❌ فشل إعادة التعيين: ' + data.error);
+                }
+            } catch (error) {
+                alert('❌ خطأ: ' + error.message);
+            }
         }
 
         async function deleteUser(id, name) {

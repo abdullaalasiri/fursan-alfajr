@@ -365,6 +365,43 @@ app.delete('/api/admin/user/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// 🔑 إعادة تعيين كلمة المرور - للمشرف فقط
+app.post('/api/admin/reset-password/:id', requireAdmin, async (req, res) => {
+  const userId = req.params.id;
+  
+  try {
+    // التحقق أن المستخدم موجود وليس مشرف
+    const userResult = await pool.query(
+      'SELECT id, username, full_name FROM users WHERE id = $1 AND is_admin = 0',
+      [userId]
+    );
+    
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'الطالب غير موجود' });
+    }
+    
+    // توليد كلمة مرور جديدة (6 أرقام عشوائية)
+    const newPassword = Math.floor(100000 + Math.random() * 900000).toString();
+    const passwordHash = bcrypt.hashSync(newPassword, 10);
+    
+    // تحديث كلمة المرور
+    await pool.query(
+      'UPDATE users SET password_hash = $1 WHERE id = $2',
+      [passwordHash, userId]
+    );
+    
+    res.json({
+      success: true,
+      username: userResult.rows[0].username,
+      fullName: userResult.rows[0].full_name,
+      newPassword: newPassword
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'فشل في إعادة تعيين كلمة المرور' });
+  }
+});
+
 // الصفحة الرئيسية
 app.get('/', (req, res) => {
   if (req.session.userId) {
