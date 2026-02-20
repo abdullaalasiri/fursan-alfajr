@@ -8,7 +8,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #FFB88C 0%, #E8A0BF 15%, #C8B6E2 35%, #9D84B7 60%, #5B6FA8 85%, #2C3E7C 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -16,25 +16,32 @@
             padding: 20px;
         }
         .container {
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
             padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            border-radius: 25px;
+            box-shadow: 0 15px 50px rgba(44, 62, 124, 0.3);
             width: 100%;
             max-width: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         .logo {
             text-align: center;
             margin-bottom: 30px;
         }
         .logo h1 {
-            color: #667eea;
+            background: linear-gradient(135deg, #FFB88C, #E8A0BF, #9D84B7, #2C3E7C);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             font-size: 32px;
             margin-bottom: 10px;
+            font-weight: bold;
         }
         .logo p {
-            color: #666;
+            color: #5B6FA8;
             font-size: 14px;
+            font-weight: 500;
         }
         .tabs {
             display: flex;
@@ -52,8 +59,11 @@
             transition: all 0.3s;
         }
         .tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
+            background: linear-gradient(135deg, #9D84B7, #5B6FA8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            border-bottom-color: #9D84B7;
         }
         .form-group {
             margin-bottom: 20px;
@@ -74,7 +84,8 @@
         }
         input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #9D84B7;
+            box-shadow: 0 0 0 3px rgba(157, 132, 183, 0.1);
         }
         select {
             width: 100%;
@@ -88,15 +99,16 @@
         }
         select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #9D84B7;
+            box-shadow: 0 0 0 3px rgba(157, 132, 183, 0.1);
         }
         .btn {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #9D84B7 0%, #5B6FA8 50%, #2C3E7C 100%);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 18px;
             font-weight: 600;
             cursor: pointer;
