@@ -63,24 +63,76 @@
             box-shadow: 0 8px 32px rgba(44, 62, 124, 0.15);
             transition: transform 0.3s, box-shadow 0.3s;
             border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #9D84B7, #5B6FA8);
+            opacity: 0;
+            transition: opacity 0.3s;
         }
         .stat-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 12px 40px rgba(44, 62, 124, 0.25);
         }
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+        .stat-card.total-points::before {
+            background: linear-gradient(90deg, #FFB88C, #E8A0BF);
+        }
+        .stat-card.rank-card::before {
+            background: linear-gradient(90deg, #9D84B7, #5B6FA8);
+        }
+        .stat-card.streak-card::before {
+            background: linear-gradient(90deg, #FF6B6B, #FF8E53);
+        }
+        .stat-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
         .stat-card h3 { 
             color: #666; 
-            font-size: 14px; 
-            margin-bottom: 10px;
-            font-weight: 500;
+            font-size: 13px; 
+            margin-bottom: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .stat-card .number { 
             background: linear-gradient(135deg, #9D84B7, #5B6FA8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            font-size: 36px; 
-            font-weight: bold; 
+            font-size: 42px; 
+            font-weight: bold;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+        .total-points .number {
+            background: linear-gradient(135deg, #FFB88C, #E8A0BF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .streak-card .number {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-label {
+            font-size: 11px;
+            color: #999;
+            font-weight: 500;
+            margin-top: 5px;
         }
         .rank-display {
             display: inline-block;
@@ -243,14 +295,23 @@
         </div>
         <div id="alert" class="alert"></div>
         <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card total-points">
+                <div class="stat-icon">⭐</div>
                 <h3>إجمالي النقاط</h3>
                 <div class="number" id="totalPoints">0</div>
+                <div class="stat-label">نقطة</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card rank-card">
+                <div class="stat-icon">🏆</div>
                 <h3>ترتيبك</h3>
                 <div class="rank-display" id="rank">-</div>
                 <div class="category-label" id="categoryLabel"></div>
+            </div>
+            <div class="stat-card streak-card">
+                <div class="stat-icon">🔥</div>
+                <h3>أطول سلسلة</h3>
+                <div class="number" id="longestStreak">0</div>
+                <div class="stat-label">يوم متتالي</div>
             </div>
         </div>
         <div id="recordedMessage" class="recorded-message" style="display: none;"></div>
@@ -261,7 +322,7 @@
                     <div class="checkbox-item" onclick="selectOption('sunnahFajr')">
                         <input type="checkbox" id="sunnahFajr" name="sunnahFajr">
                         <label for="sunnahFajr">سنة الفجر</label>
-                        <span class="points">+1</span>
+                        <span class="points">+2</span>
                     </div>
                     <div class="checkbox-item" id="jamaahItem" onclick="selectOption('fajrJamaah')">
                         <input type="checkbox" id="fajrJamaah" name="fajrJamaah">
@@ -365,6 +426,7 @@
                 const statsResponse = await fetch('/api/my-stats');
                 const stats = await statsResponse.json();
                 document.getElementById('totalPoints').textContent = stats.totalPoints;
+                document.getElementById('longestStreak').textContent = stats.longestStreak || 0;
                 
                 if (stats.rank > 0 && stats.totalStudents > 0) {
                     document.getElementById('rank').textContent = `${stats.rank} / ${stats.totalStudents}`;

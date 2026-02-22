@@ -204,7 +204,7 @@ app.post('/api/record-prayer', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'بيانات غير صحيحة' });
   }
 
-  const sunnahPoints = sunnahFajr ? 1 : 0;
+  const sunnahPoints = sunnahFajr ? 2 : 0;
   const jamaahPoints = fajrJamaah ? 3 : 0;
   const ontimePoints = fajrOntime ? 1 : 0;
   const totalPoints = sunnahPoints + jamaahPoints + ontimePoints;
@@ -261,11 +261,43 @@ app.get('/api/my-stats', requireAuth, async (req, res) => {
 
     const rank = leaderboard.rows.findIndex(item => item.user_id === userId) + 1;
 
+    // حساب أطول سلسلة
+    const recordsResult = await pool.query(
+      'SELECT prayer_date FROM daily_prayers WHERE user_id = $1 ORDER BY prayer_date ASC',
+      [userId]
+    );
+    
+    let longestStreak = 0;
+    let currentStreak = 0;
+    let previousDate = null;
+    
+    recordsResult.rows.forEach(row => {
+      const currentDate = new Date(row.prayer_date);
+      
+      if (previousDate) {
+        const diffDays = Math.floor((currentDate - previousDate) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+          currentStreak++;
+        } else {
+          longestStreak = Math.max(longestStreak, currentStreak);
+          currentStreak = 1;
+        }
+      } else {
+        currentStreak = 1;
+      }
+      
+      previousDate = currentDate;
+    });
+    
+    longestStreak = Math.max(longestStreak, currentStreak);
+
     res.json({
       totalPoints: parseInt(totalResult.rows[0].total),
       rank: rank > 0 ? rank : '-',
       totalStudents: leaderboard.rows.length,
-      category: userCategory
+      category: userCategory,
+      longestStreak: longestStreak
     });
   } catch (error) {
     console.error(error);
