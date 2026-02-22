@@ -80,6 +80,18 @@ app.post('/api/register', async (req, res) => {
   }
 
   try {
+    // التحقق من حالة التسجيل
+    const settingResult = await pool.query(
+      'SELECT value FROM settings WHERE key = $1',
+      ['registration_open']
+    );
+    
+    const isOpen = settingResult.rows[0]?.value === 'true';
+    
+    if (!isOpen) {
+      return res.status(403).json({ error: 'التسجيل مغلق حالياً. يرجى التواصل مع الإدارة.' });
+    }
+
     const passwordHash = bcrypt.hashSync(password, 10);
     const result = await pool.query(
       'INSERT INTO users (username, password_hash, full_name, category) VALUES ($1, $2, $3, $4) RETURNING id',
@@ -399,6 +411,49 @@ app.post('/api/admin/reset-password/:id', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'فشل في إعادة تعيين كلمة المرور' });
+  }
+});
+
+// 🔐 التحقق من حالة التسجيل
+app.get('/api/registration-status', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT value FROM settings WHERE key = $1',
+      ['registration_open']
+    );
+    
+    const isOpen = result.rows[0]?.value === 'true';
+    res.json({ isOpen });
+  } catch (error) {
+    console.error(error);
+    res.json({ isOpen: true }); // Default to open if error
+  }
+});
+
+// 🔐 تبديل حالة التسجيل - للمشرف فقط
+app.post('/api/admin/toggle-registration', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT value FROM settings WHERE key = $1',
+      ['registration_open']
+    );
+    
+    const currentValue = result.rows[0]?.value === 'true';
+    const newValue = !currentValue;
+    
+    await pool.query(
+      'UPDATE settings SET value = $1, updated_at = CURRENT_TIMESTAMP WHERE key = $2',
+      [newValue.toString(), 'registration_open']
+    );
+    
+    res.json({
+      success: true,
+      isOpen: newValue,
+      message: newValue ? 'تم فتح التسجيل' : 'تم إغلاق التسجيل'
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'فشل في تغيير حالة التسجيل' });
   }
 });
 

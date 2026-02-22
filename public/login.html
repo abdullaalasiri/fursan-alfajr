@@ -211,6 +211,9 @@
             <div class="tab" onclick="switchTab('register')">حساب جديد</div>
         </div>
         <div id="alert" class="alert"></div>
+        <div id="registration-closed" class="alert error" style="display: none;">
+            🔒 التسجيل مغلق حالياً. يرجى التواصل مع الإدارة.
+        </div>
         <div id="login-form" class="form-container active">
             <form onsubmit="handleLogin(event)">
                 <div class="form-group">
@@ -258,11 +261,35 @@
             if (tab === 'login') {
                 document.querySelectorAll('.tab')[0].classList.add('active');
                 document.getElementById('login-form').classList.add('active');
+                document.getElementById('registration-closed').style.display = 'none';
             } else {
+                checkRegistrationStatus();
                 document.querySelectorAll('.tab')[1].classList.add('active');
                 document.getElementById('register-form').classList.add('active');
             }
             hideAlert();
+        }
+
+        async function checkRegistrationStatus() {
+            try {
+                const response = await fetch('/api/registration-status');
+                const data = await response.json();
+                
+                const closedMsg = document.getElementById('registration-closed');
+                const registerForm = document.getElementById('register-form');
+                
+                if (!data.isOpen) {
+                    closedMsg.style.display = 'block';
+                    registerForm.style.opacity = '0.5';
+                    registerForm.style.pointerEvents = 'none';
+                } else {
+                    closedMsg.style.display = 'none';
+                    registerForm.style.opacity = '1';
+                    registerForm.style.pointerEvents = 'auto';
+                }
+            } catch (error) {
+                console.error('Error checking registration status:', error);
+            }
         }
         function showAlert(message, type) {
             const alert = document.getElementById('alert');

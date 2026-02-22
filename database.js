@@ -52,6 +52,23 @@ async function initDatabase() {
     await client.query(`CREATE INDEX IF NOT EXISTS idx_daily_prayers_date ON daily_prayers(prayer_date)`);
     await client.query(`CREATE INDEX IF NOT EXISTS idx_daily_prayers_user ON daily_prayers(user_id)`);
 
+    // إنشاء جدول الإعدادات
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS settings (
+        id SERIAL PRIMARY KEY,
+        key TEXT UNIQUE NOT NULL,
+        value TEXT NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // إضافة إعداد التسجيل الافتراضي (مفتوح)
+    await client.query(`
+      INSERT INTO settings (key, value)
+      VALUES ('registration_open', 'true')
+      ON CONFLICT (key) DO NOTHING
+    `);
+
     // إضافة حساب الادمن
     const adminPassword = bcrypt.hashSync('admin123', 10);
     await client.query(`

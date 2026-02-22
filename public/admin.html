@@ -52,6 +52,28 @@
             cursor: pointer;
             font-weight: 600;
         }
+        .toggle-reg-btn {
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+        .toggle-reg-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+        }
+        .toggle-reg-btn.closed {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+        }
+        .toggle-reg-btn.closed:hover {
+            box-shadow: 0 6px 16px rgba(244, 67, 54, 0.4);
+        }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -506,6 +528,9 @@
         <div class="header">
             <h1>🛡️ فرسان الفجر - لوحة الإدارة</h1>
             <div class="header-right">
+                <button class="toggle-reg-btn" id="toggleRegBtn" onclick="toggleRegistration()">
+                    <span id="regStatus">⏳ جاري...</span>
+                </button>
                 <span class="admin-badge">مشرف</span>
                 <button class="logout-btn" onclick="logout()">تسجيل خروج</button>
             </div>
@@ -938,7 +963,55 @@
             await fetch('/api/logout', { method: 'POST' });
             window.location.href = '/login.html';
         }
+
+        async function loadRegistrationStatus() {
+            try {
+                const response = await fetch('/api/registration-status');
+                const data = await response.json();
+                updateRegButton(data.isOpen);
+            } catch (error) {
+                console.error('Error loading registration status:', error);
+            }
+        }
+
+        function updateRegButton(isOpen) {
+            const btn = document.getElementById('toggleRegBtn');
+            const status = document.getElementById('regStatus');
+            
+            if (isOpen) {
+                btn.classList.remove('closed');
+                status.textContent = '✅ التسجيل مفتوح';
+            } else {
+                btn.classList.add('closed');
+                status.textContent = '🔒 التسجيل مغلق';
+            }
+        }
+
+        async function toggleRegistration() {
+            if (!confirm('هل تريد تغيير حالة التسجيل؟')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/toggle-registration', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    updateRegButton(data.isOpen);
+                    alert(`✅ ${data.message}`);
+                } else {
+                    alert('❌ فشل في تغيير حالة التسجيل');
+                }
+            } catch (error) {
+                alert('❌ خطأ: ' + error.message);
+            }
+        }
+
         loadStudents();
+        loadRegistrationStatus();
         setInterval(loadStudents, 30000);
     </script>
 </body>
