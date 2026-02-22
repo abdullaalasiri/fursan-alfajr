@@ -373,6 +373,61 @@
             justify-content: center;
             flex-wrap: wrap;
         }
+        .filter-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(44, 62, 124, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .filter-title {
+            background: linear-gradient(135deg, #9D84B7, #5B6FA8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.5);
+            border: 2px solid #9D84B7;
+            color: #5B6FA8;
+            padding: 10px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .filter-btn:hover {
+            background: rgba(157, 132, 183, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(157, 132, 183, 0.3);
+        }
+        .filter-btn.active {
+            background: linear-gradient(135deg, #9D84B7, #5B6FA8, #2C3E7C);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(44, 62, 124, 0.3);
+        }
+        .filter-count {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
         .search-box {
             background: white;
             padding: 20px;
@@ -469,6 +524,27 @@
                 <div class="number" id="avgPoints">0</div>
             </div>
         </div>
+        <div class="filter-section">
+            <div class="filter-title">🔍 تصفية حسب الفئة</div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterByCategory('all')">
+                    <span class="filter-count" id="count-all">0</span>
+                    الكل
+                </button>
+                <button class="filter-btn" onclick="filterByCategory('اعدادي')">
+                    <span class="filter-count" id="count-اعدادي">0</span>
+                    إعدادي
+                </button>
+                <button class="filter-btn" onclick="filterByCategory('ثانوي')">
+                    <span class="filter-count" id="count-ثانوي">0</span>
+                    ثانوي
+                </button>
+                <button class="filter-btn" onclick="filterByCategory('جامعي')">
+                    <span class="filter-count" id="count-جامعي">0</span>
+                    جامعي
+                </button>
+            </div>
+        </div>
         <div class="search-box">
             <input type="text" 
                    id="searchInput" 
@@ -547,6 +623,7 @@
 
         // Store all students for filtering
         let allStudents = [];
+        let currentCategory = 'all';
 
         async function loadStudents() {
             try {
@@ -558,6 +635,9 @@
                 const students = await response.json();
                 allStudents = students; // Store for filtering
                 
+                // Update category counts
+                updateCategoryCounts(students);
+                
                 document.getElementById('totalStudents').textContent = students.length;
                 const totalPoints = students.reduce((sum, s) => sum + parseInt(s.total_points || 0), 0);
                 document.getElementById('totalPoints').textContent = totalPoints;
@@ -568,6 +648,64 @@
             } catch (error) {
                 console.error('Error loading students:', error);
             }
+        }
+
+        function updateCategoryCounts(students) {
+            const counts = {
+                'all': students.length,
+                'اعدادي': students.filter(s => s.category === 'اعدادي').length,
+                'ثانوي': students.filter(s => s.category === 'ثانوي').length,
+                'جامعي': students.filter(s => s.category === 'جامعي').length
+            };
+            
+            Object.keys(counts).forEach(cat => {
+                const elem = document.getElementById(`count-${cat}`);
+                if (elem) elem.textContent = counts[cat];
+            });
+        }
+
+        function filterByCategory(category) {
+            currentCategory = category;
+            
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.filter-btn').classList.add('active');
+            
+            // Filter and render
+            applyFilters();
+        }
+
+        function applyFilters() {
+            let filtered = allStudents;
+            
+            // Apply category filter
+            if (currentCategory !== 'all') {
+                filtered = filtered.filter(s => s.category === currentCategory);
+            }
+            
+            // Apply search filter
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            if (searchTerm !== '') {
+                filtered = filtered.filter(student => {
+                    const fullName = student.full_name.toLowerCase();
+                    const username = student.username.toLowerCase();
+                    const category = (student.category || '').toLowerCase();
+                    
+                    return fullName.includes(searchTerm) || 
+                           username.includes(searchTerm) ||
+                           category.includes(searchTerm);
+                });
+            }
+            
+            // Re-rank filtered students
+            filtered = filtered.map((student, index) => ({
+                ...student,
+                rank: index + 1
+            }));
+            
+            renderStudents(filtered);
         }
 
         function renderStudents(students) {
@@ -737,24 +875,7 @@
         }
 
         function filterStudents() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-            
-            if (searchTerm === '') {
-                renderStudents(allStudents);
-                return;
-            }
-            
-            const filtered = allStudents.filter(student => {
-                const fullName = student.full_name.toLowerCase();
-                const username = student.username.toLowerCase();
-                const category = (student.category || '').toLowerCase();
-                
-                return fullName.includes(searchTerm) || 
-                       username.includes(searchTerm) ||
-                       category.includes(searchTerm);
-            });
-            
-            renderStudents(filtered);
+            applyFilters();
         }
 
         async function resetPassword(id, name, username) {
