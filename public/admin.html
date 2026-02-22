@@ -514,8 +514,7 @@
                         <tr>
                             <th>التاريخ</th>
                             <th>سنة الفجر</th>
-                            <th>جماعة</th>
-                            <th>في وقتها</th>
+                            <th colspan="2">حالة الصلاة</th>
                             <th>النقاط</th>
                         </tr>
                     </thead>
@@ -875,19 +874,29 @@
                                        pts === 1 ? '1 نقطة' :
                                        pts === 2 ? '2 نقطتان' :
                                        `${pts} نقاط`;
+                        
+                        // تحديد حالة الصلاة
+                        let prayerStatus = '';
+                        if (rec.fajr_jamaah) {
+                            prayerStatus = '<span class="check">✔ جماعة في المسجد</span>';
+                        } else if (rec.fajr_ontime) {
+                            prayerStatus = '<span class="check">✔ في وقتها في المنزل</span>';
+                        } else {
+                            prayerStatus = '<span class="cross">✗ في غير وقتها</span>';
+                        }
+                        
                         rows += `
                             <tr>
                                 <td>${fullLabel}</td>
                                 <td>${rec.sunnah_fajr ? '<span class="check">✔</span>' : '<span class="cross">✗</span>'}</td>
-                                <td>${rec.fajr_jamaah ? '<span class="check">✔</span>' : '<span class="cross">✗</span>'}</td>
-                                <td>${rec.fajr_ontime ? '<span class="check">✔</span>' : '<span class="cross">✗</span>'}</td>
+                                <td colspan="2">${prayerStatus}</td>
                                 <td><span class="day-points">${ptsText}</span></td>
                             </tr>`;
                     } else {
                         rows += `
                             <tr>
                                 <td>${fullLabel}</td>
-                                <td colspan="4" style="text-align:center;" class="no-record">لم يسجل</td>
+                                <td colspan="3" style="text-align:center;" class="no-record">لم يسجل</td>
                             </tr>`;
                     }
 
@@ -895,7 +904,7 @@
                 }
 
                 document.getElementById('progressTableBody').innerHTML = rows || 
-                    '<tr><td colspan="5" style="text-align:center;color:#999;padding:20px;">لا توجد سجلات</td></tr>';
+                    '<tr><td colspan="4" style="text-align:center;color:#999;padding:20px;">لا توجد سجلات</td></tr>';
 
                 document.getElementById('modalOverlay').classList.add('open');
 

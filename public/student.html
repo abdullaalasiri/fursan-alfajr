@@ -258,17 +258,25 @@
             <h2>تسجيل صلاة اليوم - <span id="todayDate">...</span></h2>
             <form onsubmit="savePrayer(event)">
                 <div class="checkbox-group">
-                    <div class="checkbox-item" onclick="toggleCheck('sunnahFajr')">
+                    <div class="checkbox-item" onclick="selectOption('sunnahFajr')">
                         <input type="checkbox" id="sunnahFajr" name="sunnahFajr">
-                        <label for="sunnahFajr">صليت سنة الفجر <span class="points">(+1)</span></label>
+                        <label for="sunnahFajr">سنة الفجر</label>
+                        <span class="points">+1</span>
                     </div>
-                    <div class="checkbox-item" id="jamaahItem" onclick="toggleCheck('fajrJamaah')">
+                    <div class="checkbox-item" id="jamaahItem" onclick="selectOption('fajrJamaah')">
                         <input type="checkbox" id="fajrJamaah" name="fajrJamaah">
-                        <label for="fajrJamaah">صليت الفجر جماعة في المسجد <span class="points">(+3)</span></label>
+                        <label for="fajrJamaah">صلاة الفجر جماعة في المسجد</label>
+                        <span class="points">+3</span>
                     </div>
-                    <div class="checkbox-item" id="ontimeItem" onclick="toggleCheck('fajrOntime')">
+                    <div class="checkbox-item" id="ontimeItem" onclick="selectOption('fajrOntime')">
                         <input type="checkbox" id="fajrOntime" name="fajrOntime">
-                        <label for="fajrOntime">صليت الفجر في وقتها <span class="points">(+1)</span></label>
+                        <label for="fajrOntime">صلاة الفجر في وقتها في المنزل</label>
+                        <span class="points">+1</span>
+                    </div>
+                    <div class="checkbox-item" id="notOntimeItem" onclick="selectOption('notOntime')">
+                        <input type="checkbox" id="notOntime" name="notOntime">
+                        <label for="notOntime">صليت في غير وقتها</label>
+                        <span class="points">0</span>
                     </div>
                 </div>
                 <button type="submit" class="save-btn">💾 حفظ التسجيل</button>
@@ -380,8 +388,9 @@
             
             let details = [];
             if (record.sunnah_fajr) details.push('سنة الفجر ✅');
-            if (record.fajr_jamaah) details.push('الفجر جماعة في المسجد ✅');
-            if (record.fajr_ontime) details.push('الفجر في وقتها ✅');
+            if (record.fajr_jamaah) details.push('صلاة الفجر جماعة في المسجد ✅');
+            else if (record.fajr_ontime) details.push('صلاة الفجر في وقتها في المنزل ✅');
+            else details.push('صليت في غير وقتها');
             
             message.innerHTML = `
                 <h3>✅ تم التسجيل - ${getFullDateLabel()}</h3>
@@ -390,11 +399,31 @@
             `;
         }
         
-        function toggleCheck(id) {
+        function selectOption(id) {
             const checkbox = document.getElementById(id);
             if (checkbox.disabled) return;
-            checkbox.checked = !checkbox.checked;
-            checkbox.parentElement.classList.toggle('checked', checkbox.checked);
+            
+            // الخيارات الرئيسية (واحد منهم فقط)
+            const mainOptions = ['fajrJamaah', 'fajrOntime', 'notOntime'];
+            
+            if (mainOptions.includes(id)) {
+                // إلغاء باقي الخيارات الرئيسية
+                mainOptions.forEach(optId => {
+                    const opt = document.getElementById(optId);
+                    if (optId !== id) {
+                        opt.checked = false;
+                        opt.parentElement.classList.remove('checked');
+                    }
+                });
+                
+                // تفعيل الخيار المختار
+                checkbox.checked = true;
+                checkbox.parentElement.classList.add('checked');
+            } else {
+                // سنة الفجر - toggle عادي
+                checkbox.checked = !checkbox.checked;
+                checkbox.parentElement.classList.toggle('checked', checkbox.checked);
+            }
         }
         
         async function savePrayer(e) {
@@ -402,9 +431,11 @@
             const sunnahFajr = document.getElementById('sunnahFajr').checked;
             const fajrJamaah = document.getElementById('fajrJamaah').checked;
             const fajrOntime = document.getElementById('fajrOntime').checked;
+            const notOntime = document.getElementById('notOntime').checked;
             
-            if (!sunnahFajr && !fajrJamaah && !fajrOntime) {
-                showAlert('اختر على الأقل خيار واحد', 'error');
+            // يجب اختيار واحد من الخيارات الرئيسية على الأقل
+            if (!fajrJamaah && !fajrOntime && !notOntime) {
+                showAlert('يجب اختيار حالة الصلاة', 'error');
                 return;
             }
             
