@@ -174,7 +174,7 @@ app.post('/api/logout', (req, res) => {
 app.get('/api/me', requireAuth, async (req, res) => {
   try {
     const userResult = await pool.query(
-      'SELECT id, username, full_name, is_admin FROM users WHERE id = $1',
+      'SELECT id, username, full_name, is_admin, branch FROM users WHERE id = $1',
       [req.session.userId]
     );
 
@@ -296,16 +296,39 @@ app.get('/api/leaderboard', requireAuth, async (req, res) => {
 // لوحة الادمن
 app.get('/api/admin/students', requireAdmin, async (req, res) => {
   try {
-    const result = await pool.query(`
+    const adminId = req.session.userId;
+    
+    // جلب معلومات الادمن
+    const adminResult = await pool.query(
+      'SELECT branch FROM users WHERE id = $1',
+      [adminId]
+    );
+    
+    const adminBranch = adminResult.rows[0]?.branch;
+    
+    // إذا الادمن له فرع محدد، يعرض فقط طلاب فرعه
+    let query = `
       SELECT u.id, u.username, u.full_name, u.category, u.branch, u.created_at,
         COALESCE(SUM(dp.total_points), 0) as total_points,
         COUNT(dp.id) as days_count
       FROM users u
       LEFT JOIN daily_prayers dp ON u.id = dp.user_id
       WHERE u.is_admin = 0
+    `;
+    
+    const params = [];
+    
+    if (adminBranch) {
+      query += ' AND u.branch = $1';
+      params.push(adminBranch);
+    }
+    
+    query += `
       GROUP BY u.id
       ORDER BY total_points DESC, days_count DESC
-    `);
+    `;
+    
+    const result = await pool.query(query, params);
 
     const studentsWithRank = result.rows.map((student, index) => ({
       ...student,
@@ -322,15 +345,29 @@ app.get('/api/admin/students', requireAdmin, async (req, res) => {
 // تفاصيل تقدم الطالب
 app.get('/api/admin/student/:id/progress', requireAdmin, async (req, res) => {
   const studentId = req.params.id;
+  const adminId = req.session.userId;
 
   try {
-    const studentResult = await pool.query(
-      'SELECT id, username, full_name FROM users WHERE id = $1 AND is_admin = 0',
-      [studentId]
+    // جلب فرع الادمن
+    const adminResult = await pool.query(
+      'SELECT branch FROM users WHERE id = $1',
+      [adminId]
     );
+    const adminBranch = adminResult.rows[0]?.branch;
+
+    // جلب معلومات الطالب مع التحقق من الفرع
+    let studentQuery = 'SELECT id, username, full_name, branch FROM users WHERE id = $1 AND is_admin = 0';
+    const studentParams = [studentId];
+    
+    if (adminBranch) {
+      studentQuery += ' AND branch = $2';
+      studentParams.push(adminBranch);
+    }
+    
+    const studentResult = await pool.query(studentQuery, studentParams);
 
     if (studentResult.rows.length === 0) {
-      return res.status(404).json({ error: 'الطالب غير موجود' });
+      return res.status(404).json({ error: 'الطالب غير موجود أو لا يمكن الوصول إليه' });
     }
 
     const recordsResult = await pool.query(`
@@ -358,17 +395,36 @@ app.get('/api/admin/student/:id/progress', requireAdmin, async (req, res) => {
 // 🗑️ حذف طالب - للمشرف فقط
 app.delete('/api/admin/user/:id', requireAdmin, async (req, res) => {
   const userId = req.params.id;
+  const adminId = req.session.userId;
   
   try {
+    // جلب فرع الادمن
+    const adminResult = await pool.query(
+      'SELECT branch FROM users WHERE id = $1',
+      [adminId]
+    );
+    const adminBranch = adminResult.rows[0]?.branch;
+
+    // التحقق من الطالب والفرع
+    let checkQuery = 'SELECT id FROM users WHERE id = $1 AND is_admin = 0';
+    const checkParams = [userId];
+    
+    if (adminBranch) {
+      checkQuery += ' AND branch = $2';
+      checkParams.push(adminBranch);
+    }
+    
+    const checkResult = await pool.query(checkQuery, checkParams);
+    
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'الطالب غير موجود أو لا يمكن حذفه' });
+    }
+    
     // حذف سجلات الصلاة أولاً
     await pool.query('DELETE FROM daily_prayers WHERE user_id = $1', [userId]);
     
-    // حذف المستخدم (التأكد أنه ليس مشرف)
-    const result = await pool.query('DELETE FROM users WHERE id = $1 AND is_admin = 0 RETURNING id', [userId]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'الطالب غير موجود أو لا يمكن حذفه' });
-    }
+    // حذف المستخدم
+    await pool.query('DELETE FROM users WHERE id = $1', [userId]);
     
     res.json({ success: true, message: 'تم حذف الطالب بنجاح' });
   } catch (error) {
@@ -380,16 +436,29 @@ app.delete('/api/admin/user/:id', requireAdmin, async (req, res) => {
 // 🔑 إعادة تعيين كلمة المرور - للمشرف فقط
 app.post('/api/admin/reset-password/:id', requireAdmin, async (req, res) => {
   const userId = req.params.id;
+  const adminId = req.session.userId;
   
   try {
-    // التحقق أن المستخدم موجود وليس مشرف
-    const userResult = await pool.query(
-      'SELECT id, username, full_name FROM users WHERE id = $1 AND is_admin = 0',
-      [userId]
+    // جلب فرع الادمن
+    const adminResult = await pool.query(
+      'SELECT branch FROM users WHERE id = $1',
+      [adminId]
     );
+    const adminBranch = adminResult.rows[0]?.branch;
+
+    // التحقق أن المستخدم موجود وليس مشرف والفرع صحيح
+    let userQuery = 'SELECT id, username, full_name FROM users WHERE id = $1 AND is_admin = 0';
+    const userParams = [userId];
+    
+    if (adminBranch) {
+      userQuery += ' AND branch = $2';
+      userParams.push(adminBranch);
+    }
+    
+    const userResult = await pool.query(userQuery, userParams);
     
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'الطالب غير موجود' });
+      return res.status(404).json({ error: 'الطالب غير موجود أو لا يمكن الوصول إليه' });
     }
     
     // توليد كلمة مرور جديدة (6 أرقام عشوائية)

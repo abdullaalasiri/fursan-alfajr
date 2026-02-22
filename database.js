@@ -79,13 +79,29 @@ async function initDatabase() {
       ON CONFLICT (key) DO NOTHING
     `);
 
-    // إضافة حساب الادمن
+    // إضافة حساب الادمن الرئيسي
     const adminPassword = bcrypt.hashSync('admin123', 10);
     await client.query(`
-      INSERT INTO users (username, password_hash, full_name, is_admin)
-      VALUES ($1, $2, $3, 1)
+      INSERT INTO users (username, password_hash, full_name, is_admin, branch)
+      VALUES ($1, $2, $3, 1, NULL)
       ON CONFLICT (username) DO NOTHING
-    `, ['admin', adminPassword, 'المشرف']);
+    `, ['admin', adminPassword, 'المشرف الرئيسي']);
+
+    // إضافة مشرف الحد
+    const hiddPassword = bcrypt.hashSync('hidd2026@', 10);
+    await client.query(`
+      INSERT INTO users (username, password_hash, full_name, is_admin, branch)
+      VALUES ($1, $2, $3, 1, $4)
+      ON CONFLICT (username) DO NOTHING
+    `, ['adminhidd', hiddPassword, 'مشرف الحد', 'الحد']);
+
+    // إضافة مشرف الرفاع
+    const rifaaPassword = bcrypt.hashSync('rifaa2026@', 10);
+    await client.query(`
+      INSERT INTO users (username, password_hash, full_name, is_admin, branch)
+      VALUES ($1, $2, $3, 1, $4)
+      ON CONFLICT (username) DO NOTHING
+    `, ['adminrifaa', rifaaPassword, 'مشرف الرفاع', 'الرفاع']);
 
     console.log('✅ قاعدة البيانات جاهزة!');
     console.log('📝 Username: admin');

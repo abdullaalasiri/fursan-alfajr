@@ -531,7 +531,7 @@
                 <button class="toggle-reg-btn" id="toggleRegBtn" onclick="toggleRegistration()">
                     <span id="regStatus">⏳ جاري...</span>
                 </button>
-                <span class="admin-badge">مشرف</span>
+                <span class="admin-badge" id="adminBadge">👨‍💼 مشرف</span>
                 <button class="logout-btn" onclick="logout()">تسجيل خروج</button>
             </div>
         </div>
@@ -653,6 +653,18 @@
 
         async function loadStudents() {
             try {
+                // Load admin info first
+                const meResponse = await fetch('/api/me');
+                const meData = await meResponse.json();
+                
+                // Update admin badge
+                const adminBadge = document.getElementById('adminBadge');
+                if (meData.user.branch) {
+                    adminBadge.textContent = `👨‍💼 مشرف ${meData.user.branch}`;
+                } else {
+                    adminBadge.textContent = '👨‍💼 المشرف الرئيسي';
+                }
+                
                 const response = await fetch('/api/admin/students');
                 if (!response.ok) {
                     window.location.href = '/login.html';
