@@ -234,6 +234,14 @@
                     <input type="text" name="fullName" required>
                 </div>
                 <div class="form-group">
+                    <label>الفرع</label>
+                    <select name="branch" required>
+                        <option value="">اختر الفرع</option>
+                        <option value="الحد">الحد</option>
+                        <option value="الرفاع">الرفاع</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>الفئة</label>
                     <select name="category" required>
                         <option value="">اختر الفئة</option>
@@ -334,6 +342,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         fullName: formData.get('fullName'),
+                        branch: formData.get('branch'),
                         category: formData.get('category'),
                         username: formData.get('username'),
                         password: formData.get('password')

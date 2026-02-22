@@ -69,9 +69,9 @@ function requireAdmin(req, res, next) {
 
 // تسجيل حساب جديد
 app.post('/api/register', async (req, res) => {
-  const { username, password, fullName, category } = req.body;
+  const { username, password, fullName, category, branch } = req.body;
 
-  if (!username || !password || !fullName || !category) {
+  if (!username || !password || !fullName || !category || !branch) {
     return res.status(400).json({ error: 'جميع الحقول مطلوبة' });
   }
 
@@ -94,8 +94,8 @@ app.post('/api/register', async (req, res) => {
 
     const passwordHash = bcrypt.hashSync(password, 10);
     const result = await pool.query(
-      'INSERT INTO users (username, password_hash, full_name, category) VALUES ($1, $2, $3, $4) RETURNING id',
-      [username, passwordHash, fullName, category]
+      'INSERT INTO users (username, password_hash, full_name, category, branch) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+      [username, passwordHash, fullName, category, branch]
     );
 
     req.session.userId = result.rows[0].id;
@@ -297,7 +297,7 @@ app.get('/api/leaderboard', requireAuth, async (req, res) => {
 app.get('/api/admin/students', requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT u.id, u.username, u.full_name, u.category, u.created_at,
+      SELECT u.id, u.username, u.full_name, u.category, u.branch, u.created_at,
         COALESCE(SUM(dp.total_points), 0) as total_points,
         COUNT(dp.id) as days_count
       FROM users u

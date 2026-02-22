@@ -33,6 +33,16 @@ async function initDatabase() {
       console.log('ℹ️ Category column already exists or error:', err.message);
     }
 
+    // إضافة عمود branch إذا مو موجود (migration)
+    try {
+      await client.query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS branch TEXT
+      `);
+      console.log('✅ Branch column check complete');
+    } catch (err) {
+      console.log('ℹ️ Branch column already exists or error:', err.message);
+    }
+
     // إنشاء جدول التسجيل اليومي
     await client.query(`
       CREATE TABLE IF NOT EXISTS daily_prayers (

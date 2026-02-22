@@ -584,6 +584,7 @@
                     <tr>
                         <th>الترتيب</th>
                         <th>الاسم</th>
+                        <th>الفرع</th>
                         <th>الفئة</th>
                         <th>اسم المستخدم</th>
                         <th>إجمالي النقاط</th>
@@ -594,7 +595,7 @@
                 </thead>
                 <tbody id="studentsTable">
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: 30px;">
+                        <td colspan="9" style="text-align: center; padding: 30px;">
                             جاري تحميل البيانات...
                         </td>
                     </tr>
@@ -738,7 +739,7 @@
             if (students.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: 30px; color: #999;">
+                        <td colspan="9" style="text-align: center; padding: 30px; color: #999;">
                             لا يوجد طلاب مطابقين للبحث
                         </td>
                     </tr>
@@ -752,6 +753,7 @@
                 const date = new Date(student.created_at);
                 const formattedDate = date.toLocaleDateString('ar-BH');
                 const categoryBadge = student.category || 'غير محدد';
+                const branchBadge = student.branch || 'غير محدد';
                 const points = parseInt(student.total_points || 0);
                 const pointsText = points === 0 ? '0 نقاط' :
                                   points === 1 ? '1 نقطة' :
@@ -761,6 +763,7 @@
                     <tr>
                         <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;"><span class="rank-badge ${rankClass}">#${student.rank}</span></td>
                         <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;"><strong>${student.full_name}</strong></td>
+                        <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${branchBadge}</td>
                         <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${categoryBadge}</td>
                         <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;">${student.username}</td>
                         <td onclick="openStudent(${student.id}, '${student.full_name}')" style="cursor:pointer;"><span class="points-badge">${pointsText}</span></td>
