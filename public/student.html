@@ -134,6 +134,65 @@
             font-weight: 500;
             margin-top: 5px;
         }
+        .past-day-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(44, 62, 124, 0.15);
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .past-day-card h3 {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .date-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .date-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+        .date-input:focus {
+            outline: none;
+            border-color: #9D84B7;
+            box-shadow: 0 0 0 3px rgba(157, 132, 183, 0.1);
+        }
+        .select-date-btn {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+            white-space: nowrap;
+        }
+        .select-date-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
+        }
+        .date-hint {
+            font-size: 13px;
+            color: #999;
+            margin-top: 8px;
+        }
         .rank-display {
             display: inline-block;
             background: linear-gradient(135deg, #9D84B7 0%, #5B6FA8 50%, #2C3E7C 100%);
@@ -314,6 +373,15 @@
                 <div class="stat-label">يوم متتالي</div>
             </div>
         </div>
+        <div class="past-day-card">
+            <h3>📅 تسجيل يوم سابق</h3>
+            <p style="color: #666; margin-bottom: 15px; font-size: 14px;">هل نسيت تسجيل يوم؟ يمكنك تسجيل أي يوم من رمضان 1 حتى اليوم</p>
+            <div class="date-input-group">
+                <input type="date" id="pastDateInput" class="date-input" />
+                <button class="select-date-btn" onclick="selectPastDate()">اختر اليوم</button>
+            </div>
+            <div class="date-hint">💡 يمكنك تسجيل من رمضان 1 (فبراير 18) إلى اليوم فقط</div>
+        </div>
         <div id="recordedMessage" class="recorded-message" style="display: none;"></div>
         <div id="prayerCard" class="prayer-card">
             <h2>تسجيل صلاة اليوم - <span id="todayDate">...</span></h2>
@@ -346,8 +414,8 @@
     </div>
     <script>
         // الحصول على التاريخ بالعربي (اسم الشهر الميلادي + رقم اليوم)
-        function getTodayLabel() {
-            const now = new Date();
+        function getTodayLabel(date) {
+            const now = date || new Date();
             const months = [
                 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
                 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
@@ -435,12 +503,107 @@
                     document.getElementById('rank').textContent = '-';
                 }
                 
+                // إعداد date picker
+                setupDatePicker();
+                
                 if (userData.todayRecord) {
                     showRecordedMessage(userData.todayRecord);
                     document.getElementById('prayerCard').style.display = 'none';
                 }
             } catch (error) {
                 showAlert('خطأ في تحميل البيانات', 'error');
+            }
+        }
+
+        function setupDatePicker() {
+            const dateInput = document.getElementById('pastDateInput');
+            const today = new Date();
+            const ramadanStart = new Date('2026-02-18');
+            
+            // تحديد min و max للـ date input
+            dateInput.min = ramadanStart.toISOString().split('T')[0];
+            dateInput.max = today.toISOString().split('T')[0];
+            dateInput.value = today.toISOString().split('T')[0];
+        }
+
+        function selectPastDate() {
+            const dateInput = document.getElementById('pastDateInput');
+            const selectedDate = dateInput.value;
+            
+            if (!selectedDate) {
+                showAlert('يرجى اختيار التاريخ', 'error');
+                return;
+            }
+            
+            const date = new Date(selectedDate + 'T00:00:00');
+            const hijri = toHijri(date);
+            const hijriLabel = `${hijriMonthName(hijri.month)} ${hijri.day}`;
+            const gregorianLabel = getTodayLabel(date);
+            
+            if (confirm(`هل تريد تسجيل صلاة يوم ${hijriLabel} (${gregorianLabel})؟\n\nملاحظة: لا يمكن التعديل بعد التسجيل.`)) {
+                showPastDayForm(selectedDate, hijriLabel);
+            }
+        }
+
+        let currentPastDate = null;
+
+        function showPastDayForm(date, label) {
+            currentPastDate = date;
+            const prayerCard = document.getElementById('prayerCard');
+            
+            // تغيير العنوان
+            prayerCard.querySelector('h2').innerHTML = `تسجيل صلاة يوم <span style="color: #FF6B6B;">${label}</span>`;
+            
+            // إعادة تعيين الـ checkboxes
+            document.getElementById('sunnahFajr').checked = false;
+            document.getElementById('fajrJamaah').checked = false;
+            document.getElementById('fajrOntime').checked = false;
+            document.getElementById('notOntime').checked = false;
+            document.querySelectorAll('.checkbox-item').forEach(item => item.classList.remove('checked'));
+            
+            // تغيير الـ form action
+            const form = prayerCard.querySelector('form');
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                await savePastDayPrayer();
+            };
+            
+            prayerCard.style.display = 'block';
+            prayerCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        async function savePastDayPrayer() {
+            const sunnahFajr = document.getElementById('sunnahFajr').checked;
+            const fajrJamaah = document.getElementById('fajrJamaah').checked;
+            const fajrOntime = document.getElementById('fajrOntime').checked;
+            const notOntime = document.getElementById('notOntime').checked;
+            
+            if (!fajrJamaah && !fajrOntime && !notOntime) {
+                showAlert('يجب اختيار حالة الصلاة', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/record-prayer-past', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        date: currentPastDate,
+                        sunnahFajr, 
+                        fajrJamaah, 
+                        fajrOntime 
+                    })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert(`${data.message} - حصلت على ${data.points} نقطة`, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert(data.error, 'error');
+                }
+            } catch (error) {
+                showAlert('خطأ في الاتصال بالسيرفر', 'error');
             }
         }
         

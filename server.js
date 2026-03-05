@@ -558,6 +558,57 @@ app.post('/api/admin/toggle-registration', requireAdmin, async (req, res) => {
   }
 });
 
+// 📝 تسجيل صلاة بتاريخ سابق
+app.post('/api/record-prayer-past', requireAuth, async (req, res) => {
+  const { date, sunnahFajr, fajrJamaah, fajrOntime } = req.body;
+  const userId = req.session.userId;
+  const today = getBahrainDate();
+  const ramadanStart = '2026-02-18'; // رمضان 1
+
+  try {
+    // التحقق: التاريخ ليس في المستقبل
+    if (date > today) {
+      return res.status(400).json({ error: 'لا يمكن التسجيل لتاريخ مستقبلي' });
+    }
+    
+    // التحقق: التاريخ ليس قبل رمضان 1
+    if (date < ramadanStart) {
+      return res.status(400).json({ error: 'لا يمكن التسجيل قبل رمضان' });
+    }
+    
+    // التحقق من عدم وجود تسجيل سابق
+    const existing = await pool.query(
+      'SELECT id FROM daily_prayers WHERE user_id = $1 AND prayer_date = $2',
+      [userId, date]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'تم التسجيل مسبقاً لهذا اليوم' });
+    }
+
+    // حساب النقاط
+    const sunnahPoints = sunnahFajr ? 2 : 0;
+    const jamaahPoints = fajrJamaah ? 3 : 0;
+    const ontimePoints = fajrOntime ? 1 : 0;
+    const totalPoints = sunnahPoints + jamaahPoints + ontimePoints;
+
+    // حفظ السجل
+    await pool.query(
+      'INSERT INTO daily_prayers (user_id, prayer_date, sunnah_fajr, fajr_jamaah, fajr_ontime, total_points) VALUES ($1, $2, $3, $4, $5, $6)',
+      [userId, date, sunnahPoints, jamaahPoints, ontimePoints, totalPoints]
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'تم حفظ التسجيل بنجاح', 
+      points: totalPoints 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'خطأ في حفظ البيانات' });
+  }
+});
+
 // الصفحة الرئيسية
 app.get('/', (req, res) => {
   if (req.session.userId) {
