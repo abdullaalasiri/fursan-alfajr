@@ -122,16 +122,29 @@ app.post('/api/login', async (req, res) => {
   }
 
   try {
-    const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    // Trim username to handle spaces
+    const trimmedUsername = username.trim();
+    
+    console.log('🔍 Login attempt:', {
+      originalUsername: username,
+      trimmedUsername: trimmedUsername,
+      usernameLength: username.length,
+      trimmedLength: trimmedUsername.length,
+      hasSpaces: username !== trimmedUsername
+    });
+    
+    const result = await pool.query('SELECT * FROM users WHERE username = $1', [trimmedUsername]);
     const user = result.rows[0];
 
     if (!user) {
+      console.log('❌ User not found:', trimmedUsername);
       return res.status(401).json({ error: 'اسم المستخدم أو كلمة المرور خاطئة' });
     }
 
     const validPassword = bcrypt.compareSync(password, user.password_hash);
 
     if (!validPassword) {
+      console.log('❌ Invalid password for user:', trimmedUsername);
       return res.status(401).json({ error: 'اسم المستخدم أو كلمة المرور خاطئة' });
     }
 
@@ -606,6 +619,64 @@ app.post('/api/record-prayer-past', requireAuth, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'خطأ في حفظ البيانات' });
+  }
+});
+
+// 🔍 Debug: فحص تفاصيل مستخدم - للمشرف فقط
+app.get('/api/admin/debug-user/:username', requireAdmin, async (req, res) => {
+  const username = req.params.username;
+  
+  try {
+    const result = await pool.query(
+      `SELECT id, username, full_name, category, branch, is_admin, created_at,
+       LENGTH(username) as username_length,
+       LENGTH(password_hash) as password_hash_length
+       FROM users WHERE username = $1`,
+      [username]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.json({ 
+        found: false,
+        message: 'المستخدم غير موجود',
+        searchedUsername: username,
+        usernameLength: username.length
+      });
+    }
+    
+    const user = result.rows[0];
+    
+    // فحص إضافي للمسافات والأحرف الخاصة
+    const hasSpaces = username.includes(' ');
+    const hasTabs = username.includes('\t');
+    const hasNewlines = username.includes('\n');
+    const trimmedUsername = username.trim();
+    const isTrimmed = username === trimmedUsername;
+    
+    res.json({
+      found: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        full_name: user.full_name,
+        category: user.category,
+        branch: user.branch,
+        is_admin: user.is_admin,
+        created_at: user.created_at
+      },
+      debug: {
+        username_length: user.username_length,
+        password_hash_length: user.password_hash_length,
+        has_spaces: hasSpaces,
+        has_tabs: hasTabs,
+        has_newlines: hasNewlines,
+        is_trimmed: isTrimmed,
+        username_bytes: Buffer.from(username).toString('hex')
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'خطأ في السيرفر' });
   }
 });
 
