@@ -193,6 +193,54 @@
             color: #999;
             margin-top: 8px;
         }
+        .challenge-card {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.15));
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 2px solid #FFD700;
+            box-shadow: 0 8px 32px rgba(255, 215, 0, 0.2);
+        }
+        .challenge-card h3 {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 20px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .challenge-score {
+            font-size: 60px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 20px 0;
+            line-height: 1;
+        }
+        .challenge-message {
+            color: #666;
+            font-size: 16px;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+        .challenge-progress {
+            background: rgba(255, 255, 255, 0.5);
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .challenge-progress-bar {
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
         .rank-display {
             display: inline-block;
             background: linear-gradient(135deg, #9D84B7 0%, #5B6FA8 50%, #2C3E7C 100%);
@@ -373,6 +421,14 @@
                 <div class="stat-label">يوم متتالي</div>
             </div>
         </div>
+        <div id="challengeCard" class="challenge-card" style="display: none;">
+            <h3>🌙 تحدي العشر الأواخر</h3>
+            <div class="challenge-score" id="challengeScore">0 / 10</div>
+            <div class="challenge-progress">
+                <div class="challenge-progress-bar" id="challengeProgressBar" style="width: 0%"></div>
+            </div>
+            <div class="challenge-message" id="challengeMessage">استمر في صلاة السنة والجماعة في المسجد! 💪</div>
+        </div>
         <div class="past-day-card">
             <h3>📅 تسجيل يوم سابق</h3>
             <p style="color: #666; margin-bottom: 15px; font-size: 14px;">هل نسيت تسجيل يوم؟ يمكنك تسجيل أي يوم من رمضان 1 حتى اليوم</p>
@@ -503,6 +559,9 @@
                     document.getElementById('rank').textContent = '-';
                 }
                 
+                // عرض بطاقة تحدي العشر الأواخر
+                displayChallengeCard(userData.user.last_ten_score || 0);
+                
                 // إعداد date picker
                 setupDatePicker();
                 
@@ -512,6 +571,38 @@
                 }
             } catch (error) {
                 showAlert('خطأ في تحميل البيانات', 'error');
+            }
+        }
+
+        function displayChallengeCard(score) {
+            // التواريخ: 10 مارس - 19 مارس 2026
+            const today = new Date();
+            const challengeStart = new Date('2026-03-10T00:00:00');
+            const challengeEnd = new Date('2026-03-19T23:59:59');
+            
+            // عرض البطاقة فقط خلال فترة التحدي
+            if (today >= challengeStart && today <= challengeEnd) {
+                const card = document.getElementById('challengeCard');
+                const scoreDisplay = document.getElementById('challengeScore');
+                const progressBar = document.getElementById('challengeProgressBar');
+                const message = document.getElementById('challengeMessage');
+                
+                scoreDisplay.textContent = `${score} / 10`;
+                progressBar.style.width = `${(score / 10) * 100}%`;
+                
+                if (score === 10) {
+                    message.innerHTML = '🎉 مبروك! أكملت التحدي بنجاح! 🌟';
+                } else if (score >= 7) {
+                    message.innerHTML = `🔥 ممتاز! باقي ${10 - score} أيام للكمال!`;
+                } else if (score >= 4) {
+                    message.innerHTML = `💪 استمر! باقي ${10 - score} أيام`;
+                } else if (score > 0) {
+                    message.innerHTML = `📈 بداية جيدة! واصل المشوار`;
+                } else {
+                    message.innerHTML = '🌙 ابدأ التحدي بصلاة السنة والجماعة معاً!';
+                }
+                
+                card.style.display = 'block';
             }
         }
 

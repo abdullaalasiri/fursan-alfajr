@@ -43,6 +43,16 @@ async function initDatabase() {
       console.log('ℹ️ Branch column already exists or error:', err.message);
     }
 
+    // إضافة عمود تحدي العشر الأواخر
+    try {
+      await client.query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS last_ten_score INTEGER DEFAULT 0
+      `);
+      console.log('✅ Last ten days score column added');
+    } catch (err) {
+      console.log('ℹ️ Last ten score column already exists or error:', err.message);
+    }
+
     // إنشاء جدول التسجيل اليومي
     await client.query(`
       CREATE TABLE IF NOT EXISTS daily_prayers (

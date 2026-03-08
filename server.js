@@ -187,7 +187,7 @@ app.post('/api/logout', (req, res) => {
 app.get('/api/me', requireAuth, async (req, res) => {
   try {
     const userResult = await pool.query(
-      'SELECT id, username, full_name, is_admin, branch FROM users WHERE id = $1',
+      'SELECT id, username, full_name, is_admin, branch, last_ten_score FROM users WHERE id = $1',
       [req.session.userId]
     );
 
@@ -237,6 +237,20 @@ app.post('/api/record-prayer', requireAuth, async (req, res) => {
       'INSERT INTO daily_prayers (user_id, prayer_date, sunnah_fajr, fajr_jamaah, fajr_ontime, total_points) VALUES ($1, $2, $3, $4, $5, $6)',
       [userId, today, sunnahPoints, jamaahPoints, ontimePoints, totalPoints]
     );
+
+    // تحدي العشر الأواخر (10 مارس - 19 مارس 2026)
+    const lastTenStart = '2026-03-10';
+    const lastTenEnd = '2026-03-19';
+    
+    if (today >= lastTenStart && today <= lastTenEnd) {
+      // التحقق: سنة + جماعة معاً
+      if (sunnahFajr && fajrJamaah) {
+        await pool.query(
+          'UPDATE users SET last_ten_score = last_ten_score + 1 WHERE id = $1 AND last_ten_score < 10',
+          [userId]
+        );
+      }
+    }
 
     res.json({ success: true, message: 'تم حفظ التسجيل بنجاح', points: totalPoints });
   } catch (error) {
@@ -611,6 +625,20 @@ app.post('/api/record-prayer-past', requireAuth, async (req, res) => {
       [userId, date, sunnahPoints, jamaahPoints, ontimePoints, totalPoints]
     );
 
+    // تحدي العشر الأواخر (10 مارس - 19 مارس 2026)
+    const lastTenStart = '2026-03-10';
+    const lastTenEnd = '2026-03-19';
+    
+    if (date >= lastTenStart && date <= lastTenEnd) {
+      // التحقق: سنة + جماعة معاً
+      if (sunnahFajr && fajrJamaah) {
+        await pool.query(
+          'UPDATE users SET last_ten_score = last_ten_score + 1 WHERE id = $1 AND last_ten_score < 10',
+          [userId]
+        );
+      }
+    }
+
     res.json({ 
       success: true, 
       message: 'تم حفظ التسجيل بنجاح', 
@@ -673,6 +701,52 @@ app.get('/api/admin/debug-user/:username', requireAdmin, async (req, res) => {
         is_trimmed: isTrimmed,
         username_bytes: Buffer.from(username).toString('hex')
       }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'خطأ في السيرفر' });
+  }
+});
+
+// 🔍 البحث عن مستخدم بالاسم الكامل - للمشرف فقط
+app.get('/api/admin/find-user/:fullname', requireAdmin, async (req, res) => {
+  const fullname = req.params.fullname;
+  
+  try {
+    const result = await pool.query(
+      `SELECT id, username, full_name, category, branch 
+       FROM users 
+       WHERE full_name ILIKE $1 
+       ORDER BY id DESC 
+       LIMIT 10`,
+      [`%${fullname}%`]
+    );
+    
+    res.json({
+      found: result.rows.length > 0,
+      count: result.rows.length,
+      users: result.rows
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'خطأ في السيرفر' });
+  }
+});
+
+// 🏆 ترتيب تحدي العشر الأواخر - للمشرف فقط
+app.get('/api/admin/last-ten-leaderboard', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, full_name, username, category, branch, last_ten_score
+      FROM users
+      WHERE is_admin = 0 AND last_ten_score > 0
+      ORDER BY last_ten_score DESC, full_name ASC
+      LIMIT 50
+    `);
+    
+    res.json({
+      success: true,
+      leaderboard: result.rows
     });
   } catch (error) {
     console.error(error);

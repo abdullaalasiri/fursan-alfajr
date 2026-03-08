@@ -548,6 +548,28 @@
                 <div class="number" id="avgPoints">0</div>
             </div>
         </div>
+        <div id="challengeSection" class="table-card" style="display: none; margin-bottom: 30px;">
+            <h2>🌙 ترتيب تحدي العشر الأواخر</h2>
+            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">الطلاب الذين حافظوا على صلاة السنة والجماعة في المسجد معاً (10-19 مارس)</p>
+            <table class="students-table" id="challengeTable">
+                <thead>
+                    <tr>
+                        <th>🏆 الترتيب</th>
+                        <th>الاسم</th>
+                        <th>الفرع</th>
+                        <th>الفئة</th>
+                        <th>النتيجة</th>
+                    </tr>
+                </thead>
+                <tbody id="challengeTableBody">
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: #999;">
+                            جاري التحميل...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
         <div class="filter-section">
             <div class="filter-title">🔍 تصفية حسب الفئة</div>
             <div class="filter-buttons">
@@ -680,6 +702,9 @@
                 document.getElementById('totalPoints').textContent = totalPoints;
                 const avgPoints = students.length > 0 ? Math.round(totalPoints / students.length) : 0;
                 document.getElementById('avgPoints').textContent = avgPoints;
+                
+                // Load challenge leaderboard
+                loadChallengeLeaderboard();
                 
                 renderStudents(students);
             } catch (error) {
@@ -981,6 +1006,67 @@
 
         function closeModalBtn() {
             document.getElementById('modalOverlay').classList.remove('open');
+        }
+
+        async function loadChallengeLeaderboard() {
+            // التواريخ: 10 مارس - 19 مارس 2026
+            const today = new Date();
+            const challengeStart = new Date('2026-03-10T00:00:00');
+            const challengeEnd = new Date('2026-03-19T23:59:59');
+            
+            // عرض الجدول فقط خلال فترة التحدي أو بعده
+            if (today < challengeStart) {
+                return; // لم يبدأ التحدي بعد
+            }
+            
+            try {
+                const response = await fetch('/api/admin/last-ten-leaderboard');
+                const data = await response.json();
+                
+                if (data.success && data.leaderboard.length > 0) {
+                    const section = document.getElementById('challengeSection');
+                    const tbody = document.getElementById('challengeTableBody');
+                    
+                    tbody.innerHTML = data.leaderboard.map((student, index) => {
+                        const rank = index + 1;
+                        let medal = '';
+                        if (rank === 1) medal = '🥇';
+                        else if (rank === 2) medal = '🥈';
+                        else if (rank === 3) medal = '🥉';
+                        
+                        let scoreDisplay = '';
+                        if (student.last_ten_score === 10) {
+                            scoreDisplay = '<span style="color: #FFD700; font-weight: bold; font-size: 18px;">✨ 10/10 ✨</span>';
+                        } else {
+                            scoreDisplay = `<span style="font-weight: bold;">${student.last_ten_score}/10</span>`;
+                        }
+                        
+                        return `
+                            <tr>
+                                <td>${medal} #${rank}</td>
+                                <td style="font-weight: 600;">${student.full_name}</td>
+                                <td>${student.branch || '-'}</td>
+                                <td><span class="category-badge">${student.category}</span></td>
+                                <td>${scoreDisplay}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                    
+                    section.style.display = 'block';
+                } else {
+                    // لا يوجد طلاب في التحدي بعد
+                    const tbody = document.getElementById('challengeTableBody');
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 40px; color: #999;">
+                                لا يوجد طلاب في التحدي بعد
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading challenge leaderboard:', error);
+            }
         }
 
         async function logout() {
