@@ -152,122 +152,31 @@
             font-size: 18px;
             font-weight: bold;
         }
-        .calendar-container {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .date-select-group {
             margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #eee;
         }
-        .calendar-header h4 {
-            margin: 0;
-            color: #333;
-            font-size: 18px;
-        }
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
-        }
-        .calendar-day-header {
-            text-align: center;
-            font-weight: bold;
-            color: #666;
-            font-size: 12px;
-            padding: 8px 0;
-        }
-        .calendar-day {
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+        .date-select {
+            width: 100%;
+            padding: 15px;
             border: 2px solid #eee;
-            border-radius: 10px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            background: white;
             cursor: pointer;
             transition: all 0.3s;
-            background: white;
-            font-size: 14px;
-            position: relative;
         }
-        .calendar-day:hover:not(.disabled):not(.recorded) {
+        .date-select:focus {
+            outline: none;
             border-color: #9D84B7;
-            background: rgba(157, 132, 183, 0.1);
-            transform: scale(1.05);
+            box-shadow: 0 0 0 3px rgba(157, 132, 183, 0.1);
         }
-        .calendar-day.disabled {
-            background: #f5f5f5;
-            color: #ccc;
-            cursor: not-allowed;
-            border-color: #eee;
+        .date-select:hover {
+            border-color: #9D84B7;
         }
-        .calendar-day.recorded {
-            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(139, 195, 74, 0.1));
-            border-color: #4CAF50;
-            cursor: not-allowed;
-        }
-        .calendar-day.recorded::after {
-            content: '✓';
-            position: absolute;
-            top: 2px;
-            right: 4px;
-            color: #4CAF50;
-            font-weight: bold;
-            font-size: 12px;
-        }
-        .calendar-day.today {
-            border-color: #FF6B6B;
-            font-weight: bold;
-        }
-        .day-hijri {
-            font-size: 10px;
-            color: #999;
-            margin-top: 2px;
-        }
-        .calendar-legend {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin-top: 15px;
-            font-size: 12px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .legend-box {
-            width: 16px;
-            height: 16px;
-            border-radius: 4px;
-            border: 2px solid;
-        }
-        .legend-box.available {
-            background: white;
-            border-color: #eee;
-        }
-        .legend-box.recorded {
-            background: rgba(76, 175, 80, 0.1);
-            border-color: #4CAF50;
-        }
-        .legend-box.disabled {
-            background: #f5f5f5;
-            border-color: #eee;
-        }
-        .date-input-group {
-            display: none;
-        }
-        .date-input {
-            display: none;
+        .date-select option {
+            padding: 10px;
+            font-size: 15px;
         }
         .select-date-btn {
             background: linear-gradient(135deg, #FF6B6B, #FF8E53);
@@ -528,36 +437,15 @@
         </div>
         <div class="past-day-card">
             <h3>📅 تسجيل يوم سابق</h3>
-            <p style="color: #666; margin-bottom: 15px; font-size: 14px;">اختر اليوم الذي تريد تسجيله (الأيام المحددة بـ ✓ تم تسجيلها مسبقاً)</p>
-            <div class="calendar-container">
-                <div class="calendar-header">
-                    <h4 id="calendarMonth">رمضان 1446</h4>
-                </div>
-                <div class="calendar-grid">
-                    <div class="calendar-day-header">ح</div>
-                    <div class="calendar-day-header">ن</div>
-                    <div class="calendar-day-header">ث</div>
-                    <div class="calendar-day-header">ر</div>
-                    <div class="calendar-day-header">خ</div>
-                    <div class="calendar-day-header">ج</div>
-                    <div class="calendar-day-header">س</div>
-                    <div id="calendarDays"></div>
-                </div>
-                <div class="calendar-legend">
-                    <div class="legend-item">
-                        <div class="legend-box available"></div>
-                        <span>متاح</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-box recorded"></div>
-                        <span>مسجل ✓</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-box disabled"></div>
-                        <span>غير متاح</span>
-                    </div>
-                </div>
+            <p style="color: #666; margin-bottom: 15px; font-size: 14px;">اختر اليوم الذي تريد تسجيله (تظهر فقط الأيام التي لم تسجلها)</p>
+            <div class="date-select-group">
+                <select id="pastDaySelect" class="date-select">
+                    <option value="">اختر اليوم...</option>
+                </select>
             </div>
+            <button class="select-date-btn" onclick="selectDropdownDate()" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #FF6B6B, #FF8E53); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);">
+                سجل اليوم المحدد
+            </button>
         </div>
         <div id="recordedMessage" class="recorded-message" style="display: none;"></div>
         <div id="prayerCard" class="prayer-card">
@@ -683,8 +571,8 @@
                 // عرض بطاقة تحدي العشر الأواخر
                 displayChallengeCard(userData.user.last_ten_score || 0);
                 
-                // تحميل وعرض Calendar
-                await renderCalendar();
+                // تحميل وعرض Dropdown
+                await populateDropdown();
                 
                 if (userData.todayRecord) {
                     showRecordedMessage(userData.todayRecord);
@@ -727,96 +615,90 @@
             }
         }
 
-        let recordedDates = [];
-
-        async function renderCalendar() {
+        async function populateDropdown() {
             try {
                 // جلب الأيام المسجلة
                 const response = await fetch('/api/my-recorded-days');
                 const data = await response.json();
-                recordedDates = data.recordedDates || [];
+                const recordedDates = new Set(data.recordedDates || []);
                 
                 const today = new Date();
                 const ramadanStart = new Date('2026-02-18'); // رمضان 1
-                const calendarDays = document.getElementById('calendarDays');
+                const dropdown = document.getElementById('pastDaySelect');
                 
-                // حساب أول يوم في الشهر (رمضان 1)
-                const firstDayOfWeek = ramadanStart.getDay(); // 0 = Sunday
+                // مسح الخيارات القديمة (إلا الخيار الأول)
+                dropdown.innerHTML = '<option value="">اختر اليوم...</option>';
                 
-                // إضافة أيام فارغة قبل بداية رمضان
-                for (let i = 0; i < firstDayOfWeek; i++) {
-                    const emptyDay = document.createElement('div');
-                    calendarDays.appendChild(emptyDay);
-                }
+                // حساب عدد أيام رمضان المتاحة (من رمضان 1 إلى اليوم)
+                const currentRamadanDay = Math.floor((today - ramadanStart) / (1000 * 60 * 60 * 24)) + 1;
+                const maxDay = Math.min(currentRamadanDay, 30);
                 
-                // إضافة أيام رمضان (من 1 إلى اليوم الحالي أو 30)
-                const ramadanDaysCount = 30;
-                const currentRamadanDay = Math.min(
-                    Math.floor((today - ramadanStart) / (1000 * 60 * 60 * 24)) + 1,
-                    ramadanDaysCount
-                );
-                
-                for (let day = 1; day <= ramadanDaysCount; day++) {
+                // إضافة الأيام الفارغة فقط
+                for (let day = 1; day <= maxDay; day++) {
                     const dayDate = new Date(ramadanStart);
                     dayDate.setDate(ramadanStart.getDate() + (day - 1));
                     const dateString = dayDate.toISOString().split('T')[0];
                     
-                    const dayDiv = document.createElement('div');
-                    dayDiv.className = 'calendar-day';
-                    
-                    const gregorianDay = dayDate.getDate();
-                    const gregorianMonth = dayDate.getMonth() + 1;
-                    
-                    // تحديد حالة اليوم
-                    const isRecorded = recordedDates.includes(dateString);
-                    const isFuture = day > currentRamadanDay;
-                    const isToday = day === currentRamadanDay;
-                    const isBeforeRamadan = dayDate < ramadanStart;
-                    
-                    if (isRecorded) {
-                        dayDiv.classList.add('recorded');
-                    } else if (isFuture || isBeforeRamadan) {
-                        dayDiv.classList.add('disabled');
+                    // إضافة فقط الأيام غير المسجلة
+                    if (!recordedDates.has(dateString)) {
+                        const hijri = toHijri(dayDate);
+                        const hijriLabel = `${hijriMonthName(hijri.month)} ${hijri.day}`;
+                        const gregorianDay = dayDate.getDate();
+                        const gregorianMonth = dayDate.getMonth() + 1;
+                        
+                        const option = document.createElement('option');
+                        option.value = dateString;
+                        option.textContent = `${hijriLabel} - ${gregorianDay}/${gregorianMonth}/2026`;
+                        dropdown.appendChild(option);
                     }
-                    
-                    if (isToday) {
-                        dayDiv.classList.add('today');
-                    }
-                    
-                    dayDiv.innerHTML = `
-                        <div>${gregorianMonth}/${gregorianDay}</div>
-                        <div class="day-hijri">رمضان ${day}</div>
-                    `;
-                    
-                    // إضافة click handler فقط للأيام المتاحة
-                    if (!isRecorded && !isFuture && !isBeforeRamadan) {
-                        dayDiv.style.cursor = 'pointer';
-                        dayDiv.onclick = () => selectCalendarDate(dateString, day);
-                    }
-                    
-                    calendarDays.appendChild(dayDiv);
+                }
+                
+                // إذا كل الأيام مسجلة
+                if (dropdown.options.length === 1) {
+                    const option = document.createElement('option');
+                    option.value = "";
+                    option.textContent = "تم تسجيل جميع الأيام! 🎉";
+                    option.disabled = true;
+                    dropdown.appendChild(option);
                 }
             } catch (error) {
-                console.error('Error rendering calendar:', error);
-                showAlert('خطأ في تحميل التقويم', 'error');
+                console.error('Error populating dropdown:', error);
+                showAlert('خطأ في تحميل الأيام المتاحة', 'error');
             }
         }
 
-        function selectCalendarDate(dateString, ramadanDay) {
-            const hijri = toHijri(new Date(dateString + 'T00:00:00'));
+        function selectDropdownDate() {
+            const dropdown = document.getElementById('pastDaySelect');
+            const selectedDate = dropdown.value;
+            
+            if (!selectedDate) {
+                showAlert('يرجى اختيار اليوم أولاً', 'error');
+                return;
+            }
+            
+            const date = new Date(selectedDate + 'T00:00:00');
+            const hijri = toHijri(date);
             const hijriLabel = `${hijriMonthName(hijri.month)} ${hijri.day}`;
             
             if (confirm(`هل تريد تسجيل صلاة يوم ${hijriLabel}؟\n\nملاحظة: لا يمكن التعديل بعد التسجيل.`)) {
-                showPastDayForm(dateString, hijriLabel);
+                showPastDayForm(selectedDate, hijriLabel);
             }
         }
 
+        function renderCalendar() {
+            // Legacy function - replaced with dropdown
+        }
+
+        function selectCalendarDate() {
+            // Legacy function - replaced with dropdown
+        }
+
         function setupDatePicker() {
-            // Legacy function - no longer needed with calendar
+            // Legacy function - no longer needed
         }
 
         function selectPastDate() {
-            // Legacy function - no longer needed with calendar
+            // Legacy function - no longer needed
         }
 
         let currentPastDate = null;
