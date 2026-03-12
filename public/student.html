@@ -429,7 +429,7 @@
         </div>
         <div id="challengeCard" class="challenge-card" style="display: none;">
             <h3>🌙 تحدي العشر الأواخر</h3>
-            <div class="challenge-score" id="challengeScore">0 / 10</div>
+            <div class="challenge-score" id="challengeScore" dir="ltr">0 / 10</div>
             <div class="challenge-progress">
                 <div class="challenge-progress-bar" id="challengeProgressBar" style="width: 0%"></div>
             </div>
@@ -773,8 +773,14 @@
             else if (record.fajr_ontime) details.push('صلاة الفجر في وقتها في المنزل ✅');
             else details.push('صليت في غير وقتها');
             
+            // استخدام تاريخ السجل الفعلي
+            const recordDate = new Date(record.prayer_date + 'T00:00:00');
+            const hijri = toHijri(recordDate);
+            const hijriLabel = `${hijriMonthName(hijri.month)} ${hijri.day}`;
+            const gregorianLabel = getTodayLabel(recordDate);
+            
             message.innerHTML = `
-                <h3>✅ تم التسجيل - ${getFullDateLabel()}</h3>
+                <h3>✅ تم التسجيل - ${gregorianLabel} - ${hijriLabel}</h3>
                 <p>${details.join(' | ')}</p>
                 <p>النقاط: ${record.total_points}</p>
             `;
