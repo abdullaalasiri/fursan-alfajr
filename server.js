@@ -754,6 +754,31 @@ app.get('/api/admin/last-ten-leaderboard', requireAdmin, async (req, res) => {
   }
 });
 
+// 📅 الحصول على الأيام المسجلة للطالب
+app.get('/api/my-recorded-days', requireAuth, async (req, res) => {
+  const userId = req.session.userId;
+  
+  try {
+    const result = await pool.query(
+      'SELECT prayer_date FROM daily_prayers WHERE user_id = $1 ORDER BY prayer_date',
+      [userId]
+    );
+    
+    // تحويل التواريخ إلى strings
+    const recordedDates = result.rows.map(row => 
+      row.prayer_date.toISOString().split('T')[0]
+    );
+    
+    res.json({
+      success: true,
+      recordedDates: recordedDates
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'خطأ في السيرفر' });
+  }
+});
+
 // الصفحة الرئيسية
 app.get('/', (req, res) => {
   if (req.session.userId) {
