@@ -779,6 +779,83 @@ app.get('/api/my-recorded-days', requireAuth, async (req, res) => {
   }
 });
 
+// ✏️ تعديل سجل يوم معين - للمشرف فقط
+app.post('/api/admin/update-day-record', requireAdmin, async (req, res) => {
+  const { userId, date, sunnahFajr, fajrJamaah, fajrOntime } = req.body;
+  const adminBranch = req.session.adminBranch;
+
+  try {
+    // التحقق من صلاحيات المشرف (إذا كان مشرف فرع)
+    if (adminBranch) {
+      const userCheck = await pool.query(
+        'SELECT branch FROM users WHERE id = $1',
+        [userId]
+      );
+      
+      if (userCheck.rows.length === 0) {
+        return res.status(404).json({ error: 'الطالب غير موجود' });
+      }
+      
+      if (userCheck.rows[0].branch !== adminBranch) {
+        return res.status(403).json({ error: 'لا يمكنك تعديل طلاب من فرع آخر' });
+      }
+    }
+
+    // حساب النقاط الجديدة
+    const sunnahPoints = sunnahFajr ? 2 : 0;
+    const jamaahPoints = fajrJamaah ? 3 : 0;
+    const ontimePoints = fajrOntime ? 1 : 0;
+    const totalPoints = sunnahPoints + jamaahPoints + ontimePoints;
+
+    // تحديث السجل
+    const result = await pool.query(
+      `UPDATE daily_prayers 
+       SET sunnah_fajr = $1, fajr_jamaah = $2, fajr_ontime = $3, total_points = $4
+       WHERE user_id = $5 AND prayer_date = $6
+       RETURNING *`,
+      [sunnahPoints, jamaahPoints, ontimePoints, totalPoints, userId, date]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'السجل غير موجود' });
+    }
+
+    // إعادة حساب last_ten_score
+    const lastTenStart = '2026-03-10';
+    const lastTenEnd = '2026-03-19';
+    
+    if (date >= lastTenStart && date <= lastTenEnd) {
+      // حساب عدد الأيام اللي فيها سنة + جماعة
+      const countResult = await pool.query(
+        `SELECT COUNT(*) as count 
+         FROM daily_prayers 
+         WHERE user_id = $1 
+         AND prayer_date >= $2 
+         AND prayer_date <= $3
+         AND sunnah_fajr > 0 
+         AND fajr_jamaah > 0`,
+        [userId, lastTenStart, lastTenEnd]
+      );
+      
+      const newScore = Math.min(parseInt(countResult.rows[0].count), 10);
+      
+      await pool.query(
+        'UPDATE users SET last_ten_score = $1 WHERE id = $2',
+        [newScore, userId]
+      );
+    }
+
+    res.json({
+      success: true,
+      message: 'تم التحديث بنجاح',
+      newPoints: totalPoints
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'خطأ في السيرفر' });
+  }
+});
+
 // الصفحة الرئيسية
 app.get('/', (req, res) => {
   if (req.session.userId) {

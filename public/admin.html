@@ -516,6 +516,7 @@
                             <th>سنة الفجر</th>
                             <th colspan="2">حالة الصلاة</th>
                             <th>النقاط</th>
+                            <th>تعديل</th>
                         </tr>
                     </thead>
                     <tbody id="progressTableBody"></tbody>
@@ -916,12 +917,14 @@
                                 <td>${rec.sunnah_fajr ? '<span class="check">✔</span>' : '<span class="cross">✗</span>'}</td>
                                 <td colspan="2">${prayerStatus}</td>
                                 <td><span class="day-points">${ptsText}</span></td>
+                                <td><button class="reset-btn" onclick="editDayRecord(${id}, '${dateStr}', ${rec.sunnah_fajr}, ${rec.fajr_jamaah}, ${rec.fajr_ontime}, '${fullLabel}')">✏️</button></td>
                             </tr>`;
                     } else {
                         rows += `
                             <tr>
                                 <td>${fullLabel}</td>
                                 <td colspan="3" style="text-align:center;" class="no-record">لم يسجل</td>
+                                <td></td>
                             </tr>`;
                     }
 
@@ -929,7 +932,7 @@
                 }
 
                 document.getElementById('progressTableBody').innerHTML = rows || 
-                    '<tr><td colspan="4" style="text-align:center;color:#999;padding:20px;">لا توجد سجلات</td></tr>';
+                    '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">لا توجد سجلات</td></tr>';
 
                 document.getElementById('modalOverlay').classList.add('open');
 
@@ -946,6 +949,59 @@
 
         function closeModalBtn() {
             document.getElementById('modalOverlay').classList.remove('open');
+        }
+
+        function editDayRecord(userId, date, currentSunnah, currentJamaah, currentOntime, label) {
+            const newSunnah = confirm(`${label}\n\nسنة الفجر حالياً: ${currentSunnah ? 'نعم ✓' : 'لا ✗'}\n\nهل تريد تغييرها إلى: ${!currentSunnah ? 'نعم ✓' : 'لا ✗'}؟`);
+            
+            const options = [
+                { name: 'جماعة في المسجد', jamaah: true, ontime: false },
+                { name: 'في وقتها في المنزل', jamaah: false, ontime: true },
+                { name: 'في غير وقتها', jamaah: false, ontime: false }
+            ];
+            
+            let currentOption = 'في غير وقتها';
+            if (currentJamaah) currentOption = 'جماعة في المسجد';
+            else if (currentOntime) currentOption = 'في وقتها في المنزل';
+            
+            const choice = prompt(`حالة الصلاة حالياً: ${currentOption}\n\nاختر:\n1 = جماعة في المسجد\n2 = في وقتها في المنزل\n3 = في غير وقتها\n\nأدخل الرقم:`);
+            
+            if (choice === null) return; // ألغى
+            
+            const optionIndex = parseInt(choice) - 1;
+            if (optionIndex < 0 || optionIndex > 2) {
+                alert('خيار غير صحيح!');
+                return;
+            }
+            
+            const selectedOption = options[optionIndex];
+            
+            updateDayRecord(userId, date, newSunnah, selectedOption.jamaah, selectedOption.ontime, label);
+        }
+
+        async function updateDayRecord(userId, date, sunnahFajr, fajrJamaah, fajrOntime, label) {
+            if (!confirm(`هل أنت متأكد من تحديث ${label}؟`)) return;
+            
+            try {
+                const response = await fetch('/api/admin/update-day-record', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, date, sunnahFajr, fajrJamaah, fajrOntime })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert(`تم التحديث بنجاح!\nالنقاط الجديدة: ${data.newPoints}`);
+                    closeModalBtn();
+                    loadStudents(); // إعادة تحميل البيانات
+                } else {
+                    alert(data.error || 'خطأ في التحديث');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('خطأ في الاتصال بالسيرفر');
+            }
         }
 
         function filterStudents() {
