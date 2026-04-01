@@ -509,14 +509,26 @@
                 return { day: shabbanDay > 0 ? shabbanDay : 1, month: 8, year: 1446 };
             }
             
-            // إذا في رمضان (30 يوم)
+            // إذا في رمضان (30 يوم): يوم 0-29
             if (diffDays < 30) {
                 return { day: diffDays + 1, month: 9, year: 1446 };
             }
             
-            // بعد رمضان = شوال
-            const shawwalDay = diffDays - 29;
-            return { day: shawwalDay, month: 10, year: 1446 };
+            // إذا في شوال (30 يوم): يوم 30-59
+            if (diffDays < 60) {
+                const shawwalDay = diffDays - 29;
+                return { day: shawwalDay, month: 10, year: 1446 };
+            }
+            
+            // إذا في ذو القعدة (30 يوم): يوم 60-89
+            if (diffDays < 90) {
+                const dhulqadahDay = diffDays - 59;
+                return { day: dhulqadahDay, month: 11, year: 1446 };
+            }
+            
+            // بعد ذو القعدة = ذو الحجة
+            const dhulhijjahDay = diffDays - 89;
+            return { day: dhulhijjahDay, month: 12, year: 1446 };
         }
 
         // اسم الشهر الهجري
@@ -624,19 +636,20 @@
                 
                 const today = new Date();
                 const ramadanStart = new Date('2026-02-18'); // رمضان 1
+                const programEnd = new Date('2026-05-18'); // نهاية ذو القعدة 30 (90 يوم)
                 const dropdown = document.getElementById('pastDaySelect');
                 
                 // مسح الخيارات القديمة (إلا الخيار الأول)
                 dropdown.innerHTML = '<option value="">اختر اليوم...</option>';
                 
-                // حساب عدد أيام رمضان المتاحة (من رمضان 1 إلى اليوم)
-                const currentRamadanDay = Math.floor((today - ramadanStart) / (1000 * 60 * 60 * 24)) + 1;
-                const maxDay = Math.min(currentRamadanDay, 30);
+                // حساب عدد الأيام المتاحة (من رمضان 1 إلى اليوم أو نهاية البرنامج)
+                const endDate = today < programEnd ? today : programEnd;
+                const totalDays = Math.floor((endDate - ramadanStart) / (1000 * 60 * 60 * 24)) + 1;
                 
-                // إضافة الأيام الفارغة فقط
-                for (let day = 1; day <= maxDay; day++) {
+                // إضافة الأيام الفارغة فقط (رمضان + شوال + ذو القعدة = 90 يوم)
+                for (let day = 0; day < totalDays && day < 90; day++) {
                     const dayDate = new Date(ramadanStart);
-                    dayDate.setDate(ramadanStart.getDate() + (day - 1));
+                    dayDate.setDate(ramadanStart.getDate() + day);
                     const dateString = dayDate.toISOString().split('T')[0];
                     
                     // إضافة فقط الأيام غير المسجلة

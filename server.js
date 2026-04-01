@@ -590,7 +590,8 @@ app.post('/api/record-prayer-past', requireAuth, async (req, res) => {
   const { date, sunnahFajr, fajrJamaah, fajrOntime } = req.body;
   const userId = req.session.userId;
   const today = getBahrainDate();
-  const ramadanStart = '2026-02-18'; // رمضان 1
+  const programStart = '2026-02-18'; // رمضان 1
+  const programEnd = '2026-05-18'; // ذو القعدة 30 (90 يوم)
 
   try {
     // التحقق: التاريخ ليس في المستقبل
@@ -598,9 +599,13 @@ app.post('/api/record-prayer-past', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'لا يمكن التسجيل لتاريخ مستقبلي' });
     }
     
-    // التحقق: التاريخ ليس قبل رمضان 1
-    if (date < ramadanStart) {
-      return res.status(400).json({ error: 'لا يمكن التسجيل قبل رمضان' });
+    // التحقق: التاريخ ضمن فترة البرنامج (90 يوم)
+    if (date < programStart) {
+      return res.status(400).json({ error: 'لا يمكن التسجيل قبل بداية البرنامج' });
+    }
+    
+    if (date > programEnd) {
+      return res.status(400).json({ error: 'انتهت فترة البرنامج' });
     }
     
     // التحقق من عدم وجود تسجيل سابق
