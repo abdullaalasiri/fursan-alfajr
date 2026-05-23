@@ -531,6 +531,8 @@
                 <button class="toggle-reg-btn" id="toggleRegBtn" onclick="toggleRegistration()">
                     <span id="regStatus">⏳ جاري...</span>
                 </button>
+                <button class="toggle-reg-btn" onclick="exportCSV('summary')" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">📥 ملخص CSV</button>
+                <button class="toggle-reg-btn" onclick="exportCSV('detailed')" style="background: linear-gradient(135deg, #8e44ad, #9b59b6);">📋 تفصيلي CSV</button>
                 <span class="admin-badge" id="adminBadge">👨‍💼 مشرف</span>
                 <button class="logout-btn" onclick="logout()">تسجيل خروج</button>
             </div>
@@ -1171,6 +1173,28 @@
                 } else {
                     alert('❌ فشل في تغيير حالة التسجيل');
                 }
+            } catch (error) {
+                alert('❌ خطأ: ' + error.message);
+            }
+        }
+
+        async function exportCSV(type) {
+            const endpoint = type === 'summary'
+                ? '/api/admin/export-summary-csv'
+                : '/api/admin/export-detailed-csv';
+            const filename = type === 'summary'
+                ? `ملخص-الطلاب-${new Date().toISOString().slice(0, 10)}.csv`
+                : `تفصيل-الطلاب-${new Date().toISOString().slice(0, 10)}.csv`;
+            try {
+                const res = await fetch(endpoint);
+                if (!res.ok) { alert('❌ فشل التصدير'); return; }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
             } catch (error) {
                 alert('❌ خطأ: ' + error.message);
             }

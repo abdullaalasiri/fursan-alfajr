@@ -759,6 +759,100 @@ app.get('/api/admin/last-ten-leaderboard', requireAdmin, async (req, res) => {
   }
 });
 
+// 📊 تصدير ملخص الطلاب CSV - للمشرف فقط
+app.get('/api/admin/export-summary-csv', requireAdmin, async (req, res) => {
+  try {
+    const branchFilter = req.session.branch
+      ? 'AND u.branch = $1'
+      : '';
+    const params = req.session.branch ? [req.session.branch] : [];
+
+    const result = await pool.query(`
+      SELECT
+        u.id, u.username, u.full_name, u.category, u.branch, u.created_at, u.last_ten_score,
+        COALESCE(SUM(dp.total_points), 0) AS total_points,
+        COUNT(dp.id) AS days_attended,
+        COALESCE(SUM(dp.sunnah_fajr), 0) AS total_sunnah_fajr,
+        COALESCE(SUM(dp.fajr_jamaah), 0) AS total_fajr_jamaah,
+        COALESCE(SUM(dp.fajr_ontime), 0) AS total_fajr_ontime
+      FROM users u
+      LEFT JOIN daily_prayers dp ON u.id = dp.user_id
+      WHERE u.is_admin = 0 ${branchFilter}
+      GROUP BY u.id, u.username, u.full_name, u.category, u.branch, u.created_at, u.last_ten_score
+      ORDER BY total_points DESC, u.full_name ASC
+    `, params);
+
+    const headers = ['الرقم', 'اسم المستخدم', 'الاسم الكامل', 'الفئة', 'الفرع', 'تاريخ التسجيل', 'المجموع الكلي', 'أيام الحضور', 'سنة الفجر', 'صلاة الجماعة', 'في الوقت', 'نقاط تحدي العشرة الأواخر'];
+    const rows = result.rows.map(r => [
+      r.id,
+      r.username,
+      r.full_name,
+      r.category || '',
+      r.branch || 'المركز الرئيسي',
+      r.created_at ? r.created_at.toISOString().split('T')[0] : '',
+      r.total_points,
+      r.days_attended,
+      r.total_sunnah_fajr,
+      r.total_fajr_jamaah,
+      r.total_fajr_ontime,
+      r.last_ten_score || 0
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+
+    const csv = '﻿' + [headers.join(','), ...rows].join('\r\n');
+    const date = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="summary-${date}.csv"`);
+    res.send(csv);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'خطأ في السيرفر' });
+  }
+});
+
+// 📋 تصدير تفصيلي يومي CSV - للمشرف فقط
+app.get('/api/admin/export-detailed-csv', requireAdmin, async (req, res) => {
+  try {
+    const branchFilter = req.session.branch
+      ? 'AND u.branch = $1'
+      : '';
+    const params = req.session.branch ? [req.session.branch] : [];
+
+    const result = await pool.query(`
+      SELECT
+        u.id, u.username, u.full_name, u.category, u.branch, u.created_at,
+        dp.prayer_date, dp.sunnah_fajr, dp.fajr_jamaah, dp.fajr_ontime, dp.total_points AS day_points
+      FROM users u
+      LEFT JOIN daily_prayers dp ON u.id = dp.user_id
+      WHERE u.is_admin = 0 ${branchFilter}
+      ORDER BY u.full_name ASC, dp.prayer_date ASC
+    `, params);
+
+    const headers = ['الرقم', 'اسم المستخدم', 'الاسم الكامل', 'الفئة', 'الفرع', 'تاريخ التسجيل', 'التاريخ', 'سنة الفجر', 'صلاة الجماعة', 'في الوقت', 'النقاط اليومية'];
+    const rows = result.rows.map(r => [
+      r.id,
+      r.username,
+      r.full_name,
+      r.category || '',
+      r.branch || 'المركز الرئيسي',
+      r.created_at ? r.created_at.toISOString().split('T')[0] : '',
+      r.prayer_date ? r.prayer_date.toISOString().split('T')[0] : '',
+      r.sunnah_fajr != null ? r.sunnah_fajr : '',
+      r.fajr_jamaah != null ? r.fajr_jamaah : '',
+      r.fajr_ontime != null ? r.fajr_ontime : '',
+      r.day_points != null ? r.day_points : ''
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+
+    const csv = '﻿' + [headers.join(','), ...rows].join('\r\n');
+    const date = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="detailed-${date}.csv"`);
+    res.send(csv);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'خطأ في السيرفر' });
+  }
+});
+
 // 📅 الحصول على الأيام المسجلة للطالب
 app.get('/api/my-recorded-days', requireAuth, async (req, res) => {
   const userId = req.session.userId;
